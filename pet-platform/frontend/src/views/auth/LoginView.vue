@@ -26,12 +26,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 
-const router    = useRouter()
-const route     = useRoute()
+const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
-const formRef   = ref()
-const loading   = ref(false)
-const form      = ref({ username: '', password: '' })
+const formRef = ref()
+const loading = ref(false)
+const form = ref({ username: '', password: '' })
 
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -44,15 +44,27 @@ async function onSubmit() {
   try {
     await userStore.login(form.value)
     ElMessage.success('登录成功')
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
-  } catch {
-    // 错误已由 axios 拦截器统一处理
+
+    const redirect = route.query.redirect
+    const roleType = userStore.userInfo?.role_type
+
+    if (redirect) {
+      router.push(redirect)
+    } else if (roleType === 'admin') {
+      router.push('/admin')
+    } else if (roleType === 'publisher') {
+      router.push('/publisher')
+    } else {
+      router.push('/')
+    }
+  } catch (e) {
+    console.error(e)
   } finally {
     loading.value = false
   }
 }
 </script>
+
 
 <style scoped>
 .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
