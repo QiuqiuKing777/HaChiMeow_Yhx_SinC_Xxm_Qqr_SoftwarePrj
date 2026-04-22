@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 # 启动
 python run.py
-# 后端运行于 http://localhost:5000
+# 后端运行于 http://localhost:5001
 ```
 
 ### 3. 前端
