@@ -1,78 +1,90 @@
 <template>
   <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="toolbar">
       <h2>服务管理</h2>
-      <el-button type="primary" @click="openDialog()">+ 发布服务</el-button>
+      <el-button class="action-btn" type="primary" @click="openDialog()">+ 发布服务</el-button>
     </div>
+
     <el-table :data="services" border v-loading="loading">
+      <el-table-column label="图片" width="90">
+        <template #default="{ row }">
+          <img :src="row.cover_image || '/NKU.png'" class="thumb" />
+        </template>
+      </el-table-column>
+
       <el-table-column label="名称" prop="service_name" />
-      <el-table-column label="类别" prop="service_type" width="100" />
+      <el-table-column label="类别" prop="category" width="100" />
+
       <el-table-column label="价格" prop="price" width="90">
         <template #default="{ row }">¥{{ row.price }}</template>
       </el-table-column>
-      <el-table-column label="时长(分)" prop="duration_minutes" width="80" />
+
+      <el-table-column label="时长" prop="duration" width="100" />
+
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
-          <el-tag :type="{ active:'success', inactive:'info' }[row.status || 'active']">{{ row.status || 'active' }}</el-tag>
+          <el-tag :type="{ online:'success', offline:'info', pending:'warning' }[row.status] || 'info'">
+            {{ row.status }}
+          </el-tag>
         </template>
       </el-table-column>
+
       <el-table-column label="操作" width="180">
         <template #default="{ row }">
-          <el-button size="small" @click="openSlotDialog(row)">时段</el-button>
-          <el-button size="small" @click="openDialog(row)">编辑</el-button>
+          <el-button class="mini-btn" size="small" @click="openSlotDialog(row)">时段</el-button>
+          <el-button class="mini-btn" size="small" @click="openDialog(row)">编辑</el-button>
           <el-popconfirm title="确认删除？" @confirm="deleteService(row)">
-            <template #reference><el-button size="small" type="danger">删除</el-button></template>
+            <template #reference>
+              <el-button class="mini-btn" size="small" type="danger">删除</el-button>
+            </template>
           </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 服务编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="editId ? '编辑服务' : '发布服务'" width="520px">
+    <el-dialog v-model="dialogVisible" :title="editId ? '编辑服务' : '发布服务'" width="540px">
       <el-form :model="form" label-width="90px">
         <el-form-item label="服务名称"><el-input v-model="form.service_name" /></el-form-item>
-        <el-form-item label="服务类别">
-          <el-select v-model="form.service_type">
-            <el-option label="美容护理" value="grooming" />
-            <el-option label="医疗保健" value="medical" />
-            <el-option label="寄养训练" value="boarding" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
+        <el-form-item label="服务类别"><el-input v-model="form.category" /></el-form-item>
         <el-form-item label="价格"><el-input-number v-model="form.price" :min="0" :precision="2" /></el-form-item>
-        <el-form-item label="时长(分钟)"><el-input-number v-model="form.duration_minutes" :min="15" /></el-form-item>
+        <el-form-item label="服务时长"><el-input v-model="form.duration" placeholder="如：约2小时" /></el-form-item>
+        <el-form-item label="服务地点"><el-input v-model="form.location" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" rows="3" /></el-form-item>
-        <el-form-item label="图片URL"><el-input v-model="form.image_url" /></el-form-item>
+
+        <el-form-item label="上传图片">
+          <div class="upload-wrap">
+            <el-upload
+              :show-file-list="false"
+              :auto-upload="false"
+              :before-upload="beforeImageUpload"
+              :on-change="handleServiceImageChange"
+              accept=".png,.jpg,.jpeg,.svg"
+            >
+              <el-button class="action-btn" type="primary" plain>选择图片</el-button>
+            </el-upload>
+            <div class="upload-tip">仅支持 PNG / JPG / SVG</div>
+            <img v-if="imagePreview" :src="imagePreview" class="preview-img" />
+          </div>
+        </el-form-item>
       </el-form>
+
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveService" :loading="saving">保存</el-button>
+        <el-button class="action-btn" @click="dialogVisible = false">取消</el-button>
+        <el-button class="action-btn" type="primary" @click="saveService" :loading="saving">保存</el-button>
       </template>
     </el-dialog>
 
-    <!-- 时段管理弹窗 -->
     <el-dialog v-model="slotDialog" title="时段管理" width="600px">
-      <el-button type="primary" size="small" @click="showAddSlot = true" style="margin-bottom:12px">添加时段</el-button>
-      <el-table :data="slots" border size="small">
-        <el-table-column label="日期" prop="slot_date" width="110" />
-        <el-table-column label="开始" prop="start_time" width="80" />
-        <el-table-column label="结束" prop="end_time" width="80" />
-        <el-table-column label="容量" prop="capacity" width="60" />
-        <el-table-column label="剩余" prop="available_count" width="60" />
-      </el-table>
+      <el-button class="action-btn" type="primary" size="small" @click="showAddSlot = true" style="margin-bottom:12px">
+        添加时段
+      </el-button>
 
-      <div v-if="showAddSlot" style="margin-top:16px;padding:12px;border:1px solid #e8e8e8;border-radius:8px">
-        <el-form :model="slotForm" :inline="true">
-          <el-form-item label="日期"><el-date-picker v-model="slotForm.slot_date" type="date" format="YYYY-MM-DD" value-format="YYYY-MM-DD" /></el-form-item>
-          <el-form-item label="开始"><el-time-picker v-model="slotForm.start_time" format="HH:mm" value-format="HH:mm" /></el-form-item>
-          <el-form-item label="结束"><el-time-picker v-model="slotForm.end_time" format="HH:mm" value-format="HH:mm" /></el-form-item>
-          <el-form-item label="容量"><el-input-number v-model="slotForm.capacity" :min="1" style="width:80px" /></el-form-item>
-          <el-form-item>
-            <el-button type="primary" size="small" @click="addSlot">添加</el-button>
-            <el-button size="small" @click="showAddSlot = false">取消</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
+      <el-table :data="slots" border size="small">
+        <el-table-column label="日期" prop="slot_date" width="120" />
+        <el-table-column label="时段" prop="slot_time" />
+        <el-table-column label="容量" prop="capacity" width="80" />
+        <el-table-column label="已预约" prop="booked_count" width="80" />
+      </el-table>
     </el-dialog>
   </div>
 </template>
@@ -83,45 +95,113 @@ import { ElMessage } from 'element-plus'
 import { servicesApi } from '@/api'
 
 const services = ref([])
-const loading  = ref(false)
-const saving   = ref(false)
+const loading = ref(false)
+const saving = ref(false)
 const dialogVisible = ref(false)
-const slotDialog    = ref(false)
-const showAddSlot   = ref(false)
-const editId   = ref(null)
+const slotDialog = ref(false)
+const showAddSlot = ref(false)
+const editId = ref(null)
 const currentServiceId = ref(null)
-const slots    = ref([])
+const slots = ref([])
 
-const form     = reactive({ service_name:'', service_type:'grooming', price:0, duration_minutes:60, description:'', image_url:'' })
-const slotForm = reactive({ slot_date:'', start_time:'', end_time:'', capacity:10 })
+const imageFile = ref(null)
+const imagePreview = ref('')
+
+const form = reactive({
+  service_name: '',
+  category: '',
+  price: 0,
+  duration: '',
+  location: '',
+  description: '',
+})
+
+function resetForm() {
+  Object.assign(form, {
+    service_name: '',
+    category: '',
+    price: 0,
+    duration: '',
+    location: '',
+    description: '',
+  })
+  imageFile.value = null
+  imagePreview.value = ''
+}
+
+function beforeImageUpload(file) {
+  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const ok = allowed.includes(file.type)
+  if (!ok) ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+  return false
+}
+
+function handleServiceImageChange(file) {
+  const raw = file.raw
+  if (!raw) return
+  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  if (!allowed.includes(raw.type)) {
+    ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+    return
+  }
+  imageFile.value = raw
+  imagePreview.value = URL.createObjectURL(raw)
+}
 
 async function load() {
   loading.value = true
   try {
     const res = await servicesApi.myServices()
     services.value = res.items || res || []
-  } finally { loading.value = false }
+  } finally {
+    loading.value = false
+  }
 }
 
 function openDialog(svc = null) {
-  editId.value = svc?.service_id || null
-  Object.assign(form, svc || { service_name:'', service_type:'grooming', price:0, duration_minutes:60, description:'', image_url:'' })
+  resetForm()
+  if (svc) {
+    editId.value = svc.service_id
+    Object.assign(form, {
+      service_name: svc.service_name || '',
+      category: svc.category || '',
+      price: svc.price || 0,
+      duration: svc.duration || '',
+      location: svc.location || '',
+      description: svc.description || '',
+    })
+    imagePreview.value = svc.cover_image || '/NKU.png'
+  } else {
+    editId.value = null
+  }
   dialogVisible.value = true
 }
 
 async function saveService() {
   saving.value = true
   try {
-    if (editId.value) await servicesApi.update(editId.value, form)
-    else              await servicesApi.create(form)
+    const fd = new FormData()
+    fd.append('service_name', form.service_name)
+    fd.append('category', form.category)
+    fd.append('price', form.price)
+    fd.append('duration', form.duration)
+    fd.append('location', form.location)
+    fd.append('description', form.description)
+    if (imageFile.value) fd.append('image', imageFile.value)
+
+    if (editId.value) await servicesApi.update(editId.value, fd)
+    else await servicesApi.create(fd)
+
     ElMessage.success('保存成功')
     dialogVisible.value = false
     load()
-  } finally { saving.value = false }
+  } finally {
+    saving.value = false
+  }
 }
 
 async function deleteService(row) {
-  await servicesApi.delete(row.service_id)
+  await servicesApi.remove(row.service_id)
   ElMessage.success('已删除')
   load()
 }
@@ -133,13 +213,50 @@ async function openSlotDialog(svc) {
   slotDialog.value = true
 }
 
-async function addSlot() {
-  await servicesApi.addSlot(currentServiceId.value, slotForm)
-  ElMessage.success('时段已添加')
-  const res = await servicesApi.slots(currentServiceId.value)
-  slots.value = res.items || res || []
-  showAddSlot.value = false
-}
-
 onMounted(load)
 </script>
+
+<style scoped>
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.thumb {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.upload-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-tip {
+  color: #909399;
+  font-size: 12px;
+}
+
+.preview-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+}
+
+.action-btn {
+  border-radius: 10px;
+  min-width: 92px;
+  font-weight: 600;
+}
+
+.mini-btn {
+  border-radius: 8px;
+}
+</style>

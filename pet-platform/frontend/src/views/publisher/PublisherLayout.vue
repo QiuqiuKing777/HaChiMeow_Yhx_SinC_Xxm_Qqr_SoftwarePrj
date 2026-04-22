@@ -96,9 +96,15 @@
       </header>
 
       <!-- 页面内容 -->
-      <main class="pub-main">
-        <router-view />
-      </main>
+      <!-- 页面内容 -->
+<main class="pub-main">
+  <div v-if="showWelcome" class="empty-state">
+    <div class="empty-cat">🐱</div>
+    <div class="empty-text">哈~吉~马~路~哟~</div>
+  </div>
+  <router-view v-else />
+</main>
+
     </div>
   </div>
 </template>
@@ -118,6 +124,7 @@ const userStore = useUserStore()
 const sideCollapsed = ref(false)
 
 const activeRoute = computed(() => route.path)
+const showWelcome = computed(() => route.path === '/publisher')
 
 const routeLabels = {
   '/publisher/dashboard':    null,
@@ -278,4 +285,37 @@ function logout()  { userStore.logout(); router.push('/login') }
   padding: 20px;
   overflow: auto;
 }
+.pub-main {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+  min-height: calc(100vh - 56px);
+}
+
+/* ---- 空状态 ---- */
+.empty-state {
+  min-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  text-align: center;
+}
+
+.empty-cat {
+  line-height: 1;
+  font-size: min(45vw, 60vh);
+  opacity: 0.92;
+  transform: translateY(-2vh);
+}
+
+.empty-text {
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #595959;
+  letter-spacing: 4px;
+}
+
 </style>
