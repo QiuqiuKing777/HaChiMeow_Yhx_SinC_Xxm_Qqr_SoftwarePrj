@@ -319,13 +319,13 @@ CREATE INDEX idx_applications_applicant ON adoption_applications(applicant_id);
 -- 管理员: admin / admin123
 INSERT INTO users (username, password_hash, nickname, email, role_type) VALUES
 ('admin',
- 'pbkdf2:sha256:260000$admin$b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86',
+ 'scrypt:32768:8:1$B3OADHKzDFCFV8Uq$b1c4d19d5dcd677f52af9edef5d3729ad0f586b0d4c47498e851d2b9bd935298ebda59615267501dd3ef127ed2ffa4ca9fc2119a00792ba7f7dcbce63bb00421',
  '平台管理员', 'admin@petplatform.com', 'admin');
 
 -- 发布方: happy_shelter / pub123  |  pet_shop_01 / pub123
 INSERT INTO users (username, password_hash, nickname, phone, email, role_type) VALUES
 ('happy_shelter',
- 'pbkdf2:sha256:260000$shelter$b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86',
+ 'scrypt:32768:8:1$B3OADHKzDFCFV8Uq$b1c4d19d5dcd677f52af9edef5d3729ad0f586b0d4c47498e851d2b9bd935298ebda59615267501dd3ef127ed2ffa4ca9fc2119a00792ba7f7dcbce63bb00421',
  '快乐救助站', '13800001111', 'shelter@example.com', 'publisher'),
 ('pet_shop_01',
  'pbkdf2:sha256:260000$shop$b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86',

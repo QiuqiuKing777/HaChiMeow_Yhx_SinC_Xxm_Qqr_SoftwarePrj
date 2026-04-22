@@ -1,5 +1,5 @@
 <template>
-  <NavBar>
+  <div>
     <h2>订单管理</h2>
     <el-select v-model="deliveryFilter" placeholder="发货状态" clearable style="width:140px;margin-bottom:16px" @change="load">
       <el-option label="待发货" value="unshipped" />
@@ -33,13 +33,12 @@
     <el-pagination v-if="total > 0" background layout="prev,pager,next,total"
       :total="total" :page-size="10" v-model:current-page="page"
       @current-change="load" style="margin-top:16px;justify-content:center;display:flex" />
-  </NavBar>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import NavBar from '@/components/NavBar.vue'
 import { ordersApi } from '@/api'
 
 const orders         = ref([])

@@ -1,5 +1,5 @@
 <template>
-  <NavBar>
+  <div>
     <h2>预约管理</h2>
     <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width:140px;margin-bottom:16px" @change="load">
       <el-option label="待确认" value="pending" />
@@ -34,13 +34,12 @@
     <el-pagination v-if="total > 0" background layout="prev,pager,next,total"
       :total="total" :page-size="10" v-model:current-page="page"
       @current-change="load" style="margin-top:16px;justify-content:center;display:flex" />
-  </NavBar>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import NavBar from '@/components/NavBar.vue'
 import { bookingsApi } from '@/api'
 
 const bookings      = ref([])

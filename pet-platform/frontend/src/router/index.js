@@ -39,72 +39,75 @@ const routes = [
 
   // 发布方工作台
   {
-    path: '/publisher/dashboard',
-    name: 'PubDashboard',
-    component: () => import('@/views/publisher/DashboardView.vue'),
+    path: '/publisher',
+    component: () => import('@/views/publisher/PublisherLayout.vue'),
     meta: { requiresAuth: true, roles: ['publisher'] },
-  },
-  {
-    path: '/publisher/pets',
-    name: 'PubPets',
-    component: () => import('@/views/publisher/PetManageView.vue'),
-    meta: { requiresAuth: true, roles: ['publisher'] },
-  },
-  {
-    path: '/publisher/applications',
-    name: 'PubApplications',
-    component: () => import('@/views/publisher/ApplicationReviewView.vue'),
-    meta: { requiresAuth: true, roles: ['publisher'] },
-  },
-  {
-    path: '/publisher/products',
-    name: 'PubProducts',
-    component: () => import('@/views/publisher/ProductManageView.vue'),
-    meta: { requiresAuth: true, roles: ['publisher'] },
-  },
-  {
-    path: '/publisher/services',
-    name: 'PubServices',
-    component: () => import('@/views/publisher/ServiceManageView.vue'),
-    meta: { requiresAuth: true, roles: ['publisher'] },
-  },
-  {
-    path: '/publisher/orders',
-    name: 'PubOrders',
-    component: () => import('@/views/publisher/OrderManageView.vue'),
-    meta: { requiresAuth: true, roles: ['publisher'] },
-  },
-  {
-    path: '/publisher/bookings',
-    name: 'PubBookings',
-    component: () => import('@/views/publisher/BookingManageView.vue'),
-    meta: { requiresAuth: true, roles: ['publisher'] },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'PubDashboard',
+        component: () => import('@/views/publisher/DashboardView.vue'),
+      },
+      {
+        path: 'pets',
+        name: 'PubPets',
+        component: () => import('@/views/publisher/PetManageView.vue'),
+      },
+      {
+        path: 'applications',
+        name: 'PubApplications',
+        component: () => import('@/views/publisher/ApplicationReviewView.vue'),
+      },
+      {
+        path: 'products',
+        name: 'PubProducts',
+        component: () => import('@/views/publisher/ProductManageView.vue'),
+      },
+      {
+        path: 'services',
+        name: 'PubServices',
+        component: () => import('@/views/publisher/ServiceManageView.vue'),
+      },
+      {
+        path: 'orders',
+        name: 'PubOrders',
+        component: () => import('@/views/publisher/OrderManageView.vue'),
+      },
+      {
+        path: 'bookings',
+        name: 'PubBookings',
+        component: () => import('@/views/publisher/BookingManageView.vue'),
+      },
+    ],
   },
 
   // 管理员后台
   {
-    path: '/admin/dashboard',
-    name: 'AdminDashboard',
-    component: () => import('@/views/admin/AdminDashboardView.vue'),
+    path: '/admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
     meta: { requiresAuth: true, roles: ['admin'] },
-  },
-  {
-    path: '/admin/users',
-    name: 'AdminUsers',
-    component: () => import('@/views/admin/UserManageView.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] },
-  },
-  {
-    path: '/admin/review',
-    name: 'AdminReview',
-    component: () => import('@/views/admin/ContentReviewView.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] },
-  },
-  {
-    path: '/admin/stats',
-    name: 'AdminStats',
-    component: () => import('@/views/admin/StatsView.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/AdminDashboardView.vue'),
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('@/views/admin/UserManageView.vue'),
+      },
+      {
+        path: 'review',
+        name: 'AdminReview',
+        component: () => import('@/views/admin/ContentReviewView.vue'),
+      },
+      {
+        path: 'stats',
+        name: 'AdminStats',
+        component: () => import('@/views/admin/StatsView.vue'),
+      },
+    ],
   },
 
   { path: '/:pathMatch(.*)*', redirect: '/' },

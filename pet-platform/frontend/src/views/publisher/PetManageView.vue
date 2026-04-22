@@ -1,5 +1,5 @@
 <template>
-  <NavBar>
+  <div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h2>宠物管理</h2>
       <el-button type="primary" @click="openDialog()">+ 发布宠物</el-button>
@@ -51,13 +51,12 @@
         <el-button type="primary" @click="savePet" :loading="saving">保存</el-button>
       </template>
     </el-dialog>
-  </NavBar>
+  </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import NavBar from '@/components/NavBar.vue'
 import { petsApi } from '@/api'
 
 const pets    = ref([])
@@ -72,7 +71,7 @@ const form = reactive({ name:'', breed:'', age:0, gender:'male', color:'', healt
 async function load() {
   loading.value = true
   try {
-    const res = await petsApi.myList({ page: page.value, per_page: 10 })
+    const res = await petsApi.myPets({ page: page.value, per_page: 10 })
     pets.value  = res.items || []
     total.value = res.total || 0
   } finally { loading.value = false }
@@ -96,7 +95,7 @@ async function savePet() {
 }
 
 async function deletePet(row) {
-  await petsApi.delete(row.pet_id)
+  await petsApi.remove(row.pet_id)
   ElMessage.success('已删除')
   load()
 }

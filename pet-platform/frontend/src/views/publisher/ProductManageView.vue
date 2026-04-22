@@ -1,5 +1,5 @@
 <template>
-  <NavBar>
+  <div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h2>商品管理</h2>
       <el-button type="primary" @click="openDialog()">+ 发布商品</el-button>
@@ -54,13 +54,12 @@
         <el-button type="primary" @click="saveProduct" :loading="saving">保存</el-button>
       </template>
     </el-dialog>
-  </NavBar>
+  </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import NavBar from '@/components/NavBar.vue'
 import { productsApi } from '@/api'
 
 const products = ref([])
@@ -75,7 +74,7 @@ const form = reactive({ product_name:'', category:'food', price:0, stock:0, desc
 async function load() {
   loading.value = true
   try {
-    const res = await productsApi.myList({ page: page.value, per_page: 10 })
+    const res = await productsApi.myProducts({ page: page.value, per_page: 10 })
     products.value = res.items || []
     total.value    = res.total || 0
   } finally { loading.value = false }
@@ -99,7 +98,7 @@ async function saveProduct() {
 }
 
 async function deleteProduct(row) {
-  await productsApi.delete(row.product_id)
+  await productsApi.remove(row.product_id)
   ElMessage.success('已删除')
   load()
 }

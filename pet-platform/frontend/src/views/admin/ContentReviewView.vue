@@ -1,35 +1,35 @@
-<template>
-  <div>
-    <div class="page-header">
-      <h2>内容审核</h2>
+﻿<template>
+  <div class="admin-page">
+    <!-- 页面横幅 -->
+    <div class="page-banner">
+      <div>
+        <h2 class="page-banner-title">内容审核</h2>
+        <p class="page-banner-sub">审核平台发布的宠物、商品和服务，管理上下线状态</p>
+      </div>
     </div>
 
-    <el-card>
-      <el-tabs v-model="activeTab" @tab-change="onTabChange">
+    <div class="page-card">
+      <el-tabs v-model="activeTab" @tab-change="onTabChange" class="admin-tabs">
         <!-- 宠物审核 -->
-        <el-tab-pane label="宠物审核" name="pets">
-          <el-row :gutter="12" style="margin-bottom:16px">
-            <el-col :span="5">
-              <el-input v-model="pets.keyword" placeholder="搜索宠物名称" clearable @change="loadPets" />
-            </el-col>
-            <el-col :span="4">
-              <el-select v-model="pets.status" placeholder="状态" clearable @change="loadPets">
-                <el-option label="待审核" value="pending" />
-                <el-option label="已上线" value="available" />
-                <el-option label="已下线" value="offline" />
-              </el-select>
-            </el-col>
-            <el-col :span="4"><el-button type="primary" @click="loadPets">搜索</el-button></el-col>
-          </el-row>
+        <el-tab-pane label="🐾 宠物审核" name="pets">
+          <div class="filter-bar">
+            <el-input v-model="pets.keyword" placeholder="搜索宠物名称" clearable @change="loadPets" style="width:200px" />
+            <el-select v-model="pets.status" placeholder="状态筛选" clearable @change="loadPets" style="width:140px">
+              <el-option label="待审核" value="pending" />
+              <el-option label="已上线" value="available" />
+              <el-option label="已下线" value="offline" />
+            </el-select>
+            <el-button type="primary" @click="loadPets">搜索</el-button>
+          </div>
 
-          <el-table :data="pets.list" v-loading="pets.loading" stripe>
+          <el-table :data="pets.list" v-loading="pets.loading" stripe class="admin-table" style="width:100%">
             <el-table-column prop="pet_id" label="ID" width="70" />
             <el-table-column label="头像" width="70">
               <template #default="{ row }">
-                <el-avatar :size="40" :src="row.cover_image" shape="square">宠</el-avatar>
+                <el-avatar :size="40" :src="row.cover_image" shape="square" style="background:#e6a23c">宠</el-avatar>
               </template>
             </el-table-column>
-            <el-table-column prop="name" label="名称" width="120" />
+            <el-table-column prop="name" label="名称" min-width="150" />
             <el-table-column prop="species" label="种类" width="80" />
             <el-table-column prop="age" label="年龄" width="80" />
             <el-table-column label="发布方" width="120">
@@ -45,16 +45,8 @@
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="180">
               <template #default="{ row }">
-                <el-button
-                  v-if="row.status !== 'available'"
-                  type="success" size="small"
-                  @click="setPetStatus(row, 'available')"
-                >上线</el-button>
-                <el-button
-                  v-if="row.status === 'available'"
-                  type="danger" size="small"
-                  @click="setPetStatus(row, 'offline')"
-                >下线</el-button>
+                <el-button v-if="row.status !== 'available'" type="success" size="small" @click="setPetStatus(row, 'available')">上线</el-button>
+                <el-button v-if="row.status === 'available'" type="danger" size="small" @click="setPetStatus(row, 'offline')">下线</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -66,25 +58,21 @@
         </el-tab-pane>
 
         <!-- 商品审核 -->
-        <el-tab-pane label="商品审核" name="products">
-          <el-row :gutter="12" style="margin-bottom:16px">
-            <el-col :span="5">
-              <el-input v-model="products.keyword" placeholder="搜索商品名称" clearable @change="loadProducts" />
-            </el-col>
-            <el-col :span="4">
-              <el-select v-model="products.status" placeholder="状态" clearable @change="loadProducts">
-                <el-option label="上架" value="on_sale" />
-                <el-option label="下架" value="off_sale" />
-              </el-select>
-            </el-col>
-            <el-col :span="4"><el-button type="primary" @click="loadProducts">搜索</el-button></el-col>
-          </el-row>
+        <el-tab-pane label="🛒 商品审核" name="products">
+          <div class="filter-bar">
+            <el-input v-model="products.keyword" placeholder="搜索商品名称" clearable @change="loadProducts" style="width:200px" />
+            <el-select v-model="products.status" placeholder="状态筛选" clearable @change="loadProducts" style="width:140px">
+              <el-option label="上架" value="on_sale" />
+              <el-option label="下架" value="off_sale" />
+            </el-select>
+            <el-button type="primary" @click="loadProducts">搜索</el-button>
+          </div>
 
-          <el-table :data="products.list" v-loading="products.loading" stripe>
+          <el-table :data="products.list" v-loading="products.loading" stripe class="admin-table" style="width:100%;font-size:16px">
             <el-table-column prop="product_id" label="ID" width="70" />
             <el-table-column label="图片" width="70">
               <template #default="{ row }">
-                <el-avatar :size="40" :src="row.cover_image" shape="square">品</el-avatar>
+                <el-avatar :size="40" :src="row.cover_image" shape="square" style="background:#67c23a">品</el-avatar>
               </template>
             </el-table-column>
             <el-table-column prop="name" label="商品名称" min-width="150" />
@@ -105,16 +93,8 @@
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="140">
               <template #default="{ row }">
-                <el-button
-                  v-if="row.status !== 'on_sale'"
-                  type="success" size="small"
-                  @click="setProductStatus(row, 'on_sale')"
-                >上架</el-button>
-                <el-button
-                  v-if="row.status === 'on_sale'"
-                  type="danger" size="small"
-                  @click="setProductStatus(row, 'off_sale')"
-                >下架</el-button>
+                <el-button v-if="row.status !== 'on_sale'" type="success" size="small" @click="setProductStatus(row, 'on_sale')">上架</el-button>
+                <el-button v-if="row.status === 'on_sale'" type="danger" size="small" @click="setProductStatus(row, 'off_sale')">下架</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -126,21 +106,17 @@
         </el-tab-pane>
 
         <!-- 服务审核 -->
-        <el-tab-pane label="服务审核" name="services">
-          <el-row :gutter="12" style="margin-bottom:16px">
-            <el-col :span="5">
-              <el-input v-model="services.keyword" placeholder="搜索服务名称" clearable @change="loadServices" />
-            </el-col>
-            <el-col :span="4">
-              <el-select v-model="services.status" placeholder="状态" clearable @change="loadServices">
-                <el-option label="上线" value="active" />
-                <el-option label="下线" value="inactive" />
-              </el-select>
-            </el-col>
-            <el-col :span="4"><el-button type="primary" @click="loadServices">搜索</el-button></el-col>
-          </el-row>
+        <el-tab-pane label="📋 服务审核" name="services">
+          <div class="filter-bar">
+            <el-input v-model="services.keyword" placeholder="搜索服务名称" clearable @change="loadServices" style="width:200px" />
+            <el-select v-model="services.status" placeholder="状态筛选" clearable @change="loadServices" style="width:140px">
+              <el-option label="上线" value="active" />
+              <el-option label="下线" value="inactive" />
+            </el-select>
+            <el-button type="primary" @click="loadServices">搜索</el-button>
+          </div>
 
-          <el-table :data="services.list" v-loading="services.loading" stripe>
+          <el-table :data="services.list" v-loading="services.loading" stripe class="admin-table" style="width:100%;font-size:16px">
             <el-table-column prop="service_id" label="ID" width="70" />
             <el-table-column prop="name" label="服务名称" min-width="150" />
             <el-table-column prop="category" label="分类" width="100" />
@@ -159,16 +135,8 @@
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="160">
               <template #default="{ row }">
-                <el-button
-                  v-if="row.status !== 'active'"
-                  type="success" size="small"
-                  @click="setServiceStatus(row, 'active')"
-                >上线</el-button>
-                <el-button
-                  v-if="row.status === 'active'"
-                  type="danger" size="small"
-                  @click="setServiceStatus(row, 'inactive')"
-                >下线</el-button>
+                <el-button v-if="row.status !== 'active'" type="success" size="small" @click="setServiceStatus(row, 'active')">上线</el-button>
+                <el-button v-if="row.status === 'active'" type="danger" size="small" @click="setServiceStatus(row, 'inactive')">下线</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -179,7 +147,7 @@
           />
         </el-tab-pane>
       </el-tabs>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -261,6 +229,47 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-header h2 { margin: 0; }
+.admin-page { padding-bottom: 20px; }
+
+.page-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin-bottom: 16px;
+}
+.page-banner-title { color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+.page-banner-sub   { color: #a0b0d0; font-size: 13px; margin: 0; }
+
+.page-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 6px rgba(0,21,41,.06);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 0 4px;
+}
+
+.admin-tabs :deep(.el-tabs__header) { margin-bottom: 0; }
+.admin-tabs :deep(.el-tabs__nav-wrap::after) { height: 1px; background: #f0f2f5; }
+.admin-tabs :deep(.el-tabs__item) { font-size: 14px; font-weight: 500; }
+.admin-tabs :deep(.el-tabs__item.is-active) { font-weight: 600; color: #409eff; }
+
+.admin-table :deep(th.el-table__cell) {
+  background: #f5f7fa;
+  color: #606266;
+  font-weight: 600;
+  font-size: 16px !important;
+}
+.admin-table :deep(td.el-table__cell) {
+  font-size: 16px !important;
+}
 </style>

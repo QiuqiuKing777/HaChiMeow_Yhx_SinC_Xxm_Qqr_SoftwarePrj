@@ -1,5 +1,5 @@
 <template>
-  <NavBar>
+  <div>
     <div style="display:flex;justify-content:space-between;margin-bottom:16px">
       <h2>领养申请审核</h2>
       <el-select v-model="statusFilter" placeholder="筛选状态" clearable style="width:140px" @change="load">
@@ -41,13 +41,12 @@
         <el-button type="danger" @click="confirmReject">确认拒绝</el-button>
       </template>
     </el-dialog>
-  </NavBar>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import NavBar from '@/components/NavBar.vue'
 import { adoptionsApi } from '@/api'
 
 const applications = ref([])

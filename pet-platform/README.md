@@ -52,8 +52,8 @@ npm run dev
 
 | 角色 | 用户名 | 密码 |
 |---|---|---|
-| 管理员 | admin | admin123 |
-| 发布方 | publisher1 | pub123456 |
+| 管理员 | admin | 123456 |
+| 发布方 | happy_shelter | 123456 |
 | 发布方 | publisher2 | pub123456 |
 | 普通用户 | user1 | user123456 |
 | 普通用户 | user2 | user123456 |

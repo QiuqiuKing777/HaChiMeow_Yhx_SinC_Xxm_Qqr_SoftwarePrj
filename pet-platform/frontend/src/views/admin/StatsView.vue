@@ -1,88 +1,115 @@
-<template>
-  <div>
-    <div class="page-header">
-      <h2>统计报表</h2>
-      <el-button @click="loadAll" :loading="statsLoading">刷新数据</el-button>
+﻿<template>
+  <div class="admin-page">
+    <!-- 页面横幅 -->
+    <div class="page-banner">
+      <div>
+        <h2 class="page-banner-title">统计报表</h2>
+        <p class="page-banner-sub">平台核心业务数据汇总与状态分布分析</p>
+      </div>
+      <el-button @click="loadAll" :loading="statsLoading" class="refresh-btn">
+        刷新数据
+      </el-button>
     </div>
 
-    <!-- 核心指标 -->
-    <el-row :gutter="16" v-loading="statsLoading">
-      <el-col :span="4" v-for="item in metrics" :key="item.label">
-        <el-card class="metric-card">
+    <!-- 核心指标卡片 -->
+    <el-row :gutter="16" v-loading="statsLoading" class="metric-row">
+      <el-col :xs="12" :sm="4" v-for="item in metrics" :key="item.label">
+        <div class="metric-card" :style="{ '--mc': item.color }">
+          <div class="metric-icon-wrap" :style="{ background: item.color + '18' }">
+            <el-icon :style="{ color: item.color }"><component :is="item.icon" /></el-icon>
+          </div>
           <div class="metric-value">{{ item.value }}</div>
           <div class="metric-label">{{ item.label }}</div>
-        </el-card>
+        </div>
       </el-col>
     </el-row>
 
-    <!-- 图表区 -->
+    <!-- 状态分布表格 -->
     <el-row :gutter="16" style="margin-top:16px">
-      <el-col :span="12">
-        <el-card header="宠物状态分布">
-          <el-table :data="petStats" size="small" stripe>
+      <el-col :xs="24" :sm="12">
+        <div class="page-card">
+          <div class="card-toolbar"><span class="card-title">宠物状态分布</span></div>
+          <el-table :data="petStats" size="small" stripe class="admin-table">
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
                 <el-tag :type="petStatusType(row.status)">{{ petStatusLabel(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="count" label="数量" />
+            <el-table-column prop="count" label="数量" width="100">
+              <template #default="{ row }">
+                <span class="count-num">{{ row.count }}</span>
+              </template>
+            </el-table-column>
           </el-table>
-        </el-card>
+        </div>
       </el-col>
-      <el-col :span="12">
-        <el-card header="领养申请状态分布">
-          <el-table :data="adoptionStats" size="small" stripe>
+      <el-col :xs="24" :sm="12">
+        <div class="page-card">
+          <div class="card-toolbar"><span class="card-title">领养申请状态分布</span></div>
+          <el-table :data="adoptionStats" size="small" stripe class="admin-table">
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
                 <el-tag :type="adoptionStatusType(row.status)">{{ adoptionStatusLabel(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="count" label="数量" />
+            <el-table-column prop="count" label="数量" width="100">
+              <template #default="{ row }">
+                <span class="count-num">{{ row.count }}</span>
+              </template>
+            </el-table-column>
           </el-table>
-        </el-card>
+        </div>
       </el-col>
     </el-row>
 
     <el-row :gutter="16" style="margin-top:16px">
-      <el-col :span="12">
-        <el-card header="订单状态分布">
-          <el-table :data="orderStats" size="small" stripe>
+      <el-col :xs="24" :sm="12">
+        <div class="page-card">
+          <div class="card-toolbar"><span class="card-title">订单状态分布</span></div>
+          <el-table :data="orderStats" size="small" stripe class="admin-table">
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
                 <el-tag :type="orderStatusType(row.status)">{{ orderStatusLabel(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="count" label="数量" />
+            <el-table-column prop="count" label="数量" width="100">
+              <template #default="{ row }">
+                <span class="count-num">{{ row.count }}</span>
+              </template>
+            </el-table-column>
           </el-table>
-        </el-card>
+        </div>
       </el-col>
-      <el-col :span="12">
-        <el-card header="预约状态分布">
-          <el-table :data="bookingStats" size="small" stripe>
+      <el-col :xs="24" :sm="12">
+        <div class="page-card">
+          <div class="card-toolbar"><span class="card-title">预约状态分布</span></div>
+          <el-table :data="bookingStats" size="small" stripe class="admin-table">
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
                 <el-tag :type="bookingStatusType(row.status)">{{ bookingStatusLabel(row.status) }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="count" label="数量" />
+            <el-table-column prop="count" label="数量" width="100">
+              <template #default="{ row }">
+                <span class="count-num">{{ row.count }}</span>
+              </template>
+            </el-table-column>
           </el-table>
-        </el-card>
+        </div>
       </el-col>
     </el-row>
 
     <!-- 操作日志 -->
-    <el-card style="margin-top:16px" header="操作日志">
-      <el-row :gutter="12" style="margin-bottom:12px">
-        <el-col :span="5">
-          <el-input v-model="log.keyword" placeholder="搜索操作员/操作类型" clearable @change="loadLogs" />
-        </el-col>
-        <el-col :span="4">
+    <div class="page-card" style="margin-top:16px">
+      <div class="card-toolbar">
+        <span class="card-title">操作日志</span>
+        <div style="display:flex;gap:8px">
+          <el-input v-model="log.keyword" placeholder="搜索操作员/操作类型" clearable @change="loadLogs" style="width:220px" />
           <el-button type="primary" @click="loadLogs">搜索</el-button>
           <el-button @click="log.keyword='';loadLogs()">重置</el-button>
-        </el-col>
-      </el-row>
-
-      <el-table :data="log.list" v-loading="log.loading" stripe>
+        </div>
+      </div>
+      <el-table :data="log.list" v-loading="log.loading" stripe class="admin-table">
         <el-table-column prop="log_id" label="ID" width="70" />
         <el-table-column label="操作员" width="120">
           <template #default="{ row }">{{ row.operator?.username || row.operator_id }}</template>
@@ -100,24 +127,25 @@
         :page-size="20" v-model:current-page="log.page"
         @current-change="loadLogs" style="margin-top:12px;display:flex;justify-content:flex-end"
       />
-    </el-card>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { User, ShoppingBag, Tickets, Calendar, DataAnalysis, List } from '@element-plus/icons-vue'
 import { adminApi } from '@/api'
 
 const statsLoading = ref(false)
 const stats = ref({})
 
 const metrics = computed(() => [
-  { label: '用户总数',     value: stats.value.total_users     ?? '-' },
-  { label: '宠物总数',     value: stats.value.total_pets      ?? '-' },
-  { label: '商品总数',     value: stats.value.total_products  ?? '-' },
-  { label: '服务总数',     value: stats.value.total_services  ?? '-' },
-  { label: '订单总数',     value: stats.value.total_orders    ?? '-' },
-  { label: '预约总数',     value: stats.value.total_bookings  ?? '-' },
+  { label: '用户总数',    value: stats.value.total_users    ?? '-', color: '#409eff', icon: User },
+  { label: '宠物总数',    value: stats.value.total_pets     ?? '-', color: '#e6a23c', icon: Tickets },
+  { label: '商品总数',    value: stats.value.total_products ?? '-', color: '#67c23a', icon: ShoppingBag },
+  { label: '服务总数',    value: stats.value.total_services ?? '-', color: '#9b59b6', icon: DataAnalysis },
+  { label: '订单总数',    value: stats.value.total_orders   ?? '-', color: '#f56c6c', icon: List },
+  { label: '预约总数',    value: stats.value.total_bookings ?? '-', color: '#1abc9c', icon: Calendar },
 ])
 
 const petStats      = computed(() => stats.value.pet_stats      || [])
@@ -158,9 +186,71 @@ const bookingStatusType  = s => ({ pending: 'warning', confirmed: 'primary', can
 </script>
 
 <style scoped>
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-header h2 { margin: 0; }
-.metric-card { text-align: center; }
-.metric-value { font-size: 32px; font-weight: bold; color: #409eff; }
-.metric-label { margin-top: 6px; color: #606266; font-size: 14px; }
+.admin-page { padding-bottom: 20px; }
+
+.page-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin-bottom: 16px;
+}
+.page-banner-title { color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+.page-banner-sub   { color: #a0b0d0; font-size: 13px; margin: 0; }
+.refresh-btn { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); color: #fff; }
+.refresh-btn:hover { background: rgba(255,255,255,.22); }
+
+/* 核心指标卡片 */
+.metric-row { margin-bottom: 0; }
+.metric-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 6px rgba(0,21,41,.06);
+  border-top: 3px solid var(--mc);
+  text-align: center;
+  margin-bottom: 16px;
+  transition: box-shadow .2s, transform .2s;
+}
+.metric-card:hover { box-shadow: 0 4px 16px rgba(0,21,41,.12); transform: translateY(-2px); }
+.metric-icon-wrap {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+}
+.metric-icon-wrap .el-icon { font-size: 22px; }
+.metric-value { font-size: 26px; font-weight: 800; color: #1f2937; line-height: 1; }
+.metric-label { font-size: 12px; color: #8c9bb5; margin-top: 5px; }
+
+/* 通用卡片 */
+.page-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 6px rgba(0,21,41,.06);
+  margin-bottom: 0;
+}
+.card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  padding-left: 10px;
+  border-left: 3px solid #409eff;
+}
+.count-num { font-weight: 700; color: #409eff; }
+
+.admin-table :deep(th.el-table__cell) {
+  background: #f5f7fa;
+  color: #606266;
+  font-weight: 600;
+}
 </style>

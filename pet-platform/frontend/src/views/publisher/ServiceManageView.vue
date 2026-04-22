@@ -1,5 +1,5 @@
 <template>
-  <NavBar>
+  <div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h2>服务管理</h2>
       <el-button type="primary" @click="openDialog()">+ 发布服务</el-button>
@@ -74,13 +74,12 @@
         </el-form>
       </div>
     </el-dialog>
-  </NavBar>
+  </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import NavBar from '@/components/NavBar.vue'
 import { servicesApi } from '@/api'
 
 const services = ref([])
@@ -99,7 +98,7 @@ const slotForm = reactive({ slot_date:'', start_time:'', end_time:'', capacity:1
 async function load() {
   loading.value = true
   try {
-    const res = await servicesApi.myList()
+    const res = await servicesApi.myServices()
     services.value = res.items || res || []
   } finally { loading.value = false }
 }
