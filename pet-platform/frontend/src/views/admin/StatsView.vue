@@ -99,6 +99,43 @@
       </el-col>
     </el-row>
 
+    <el-row :gutter="16" style="margin-top:16px">
+      <el-col :xs="24" :sm="12">
+        <div class="page-card">
+          <div class="card-toolbar"><span class="card-title">服务状态分布</span></div>
+          <el-table :data="serviceStats" size="small" stripe class="admin-table">
+            <el-table-column prop="status" label="状态">
+              <template #default="{ row }">
+                <el-tag :type="serviceStatusType(row.status)">{{ serviceStatusLabel(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="count" label="数量" width="100">
+              <template #default="{ row }">
+                <span class="count-num">{{ row.count }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12">
+        <div class="page-card">
+          <div class="card-toolbar"><span class="card-title">商品状态分布</span></div>
+          <el-table :data="productStats" size="small" stripe class="admin-table">
+            <el-table-column prop="status" label="状态">
+              <template #default="{ row }">
+                <el-tag :type="productStatusType(row.status)">{{ productStatusLabel(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="count" label="数量" width="100">
+              <template #default="{ row }">
+                <span class="count-num">{{ row.count }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-col>
+    </el-row>
+
     <!-- 操作日志 -->
     <div class="page-card" style="margin-top:16px">
       <div class="card-toolbar">
@@ -140,18 +177,66 @@ const statsLoading = ref(false)
 const stats = ref({})
 
 const metrics = computed(() => [
-  { label: '用户总数',    value: stats.value.total_users    ?? '-', color: '#409eff', icon: User },
-  { label: '宠物总数',    value: stats.value.total_pets     ?? '-', color: '#e6a23c', icon: Tickets },
-  { label: '商品总数',    value: stats.value.total_products ?? '-', color: '#67c23a', icon: ShoppingBag },
-  { label: '服务总数',    value: stats.value.total_services ?? '-', color: '#9b59b6', icon: DataAnalysis },
-  { label: '订单总数',    value: stats.value.total_orders   ?? '-', color: '#f56c6c', icon: List },
-  { label: '预约总数',    value: stats.value.total_bookings ?? '-', color: '#1abc9c', icon: Calendar },
+  { label: '用户总数',    value: stats.value.users?.total    ?? '-', color: '#409eff', icon: User },
+  { label: '宠物总数',    value: stats.value.pets?.total     ?? '-', color: '#e6a23c', icon: Tickets },
+  { label: '商品总数',    value: stats.value.products?.total ?? '-', color: '#67c23a', icon: ShoppingBag },
+  { label: '服务总数',    value: stats.value.services?.total ?? '-', color: '#9b59b6', icon: DataAnalysis },
+  { label: '订单总数',    value: stats.value.orders?.total   ?? '-', color: '#f56c6c', icon: List },
+  { label: '预约总数',    value: stats.value.bookings?.total ?? '-', color: '#1abc9c', icon: Calendar },
 ])
 
-const petStats      = computed(() => stats.value.pet_stats      || [])
-const adoptionStats = computed(() => stats.value.adoption_stats || [])
-const orderStats    = computed(() => stats.value.order_stats    || [])
-const bookingStats  = computed(() => stats.value.booking_stats  || [])
+const petStats = computed(() => {
+  const p = stats.value.pets || {}
+  return [
+    { status: 'online',  count: p.online  || 0 },
+    { status: 'pending', count: p.pending || 0 },
+    { status: 'adopted', count: p.adopted || 0 },
+    { status: 'offline', count: p.offline || 0 },
+  ].filter(x => x.count > 0)
+})
+const adoptionStats = computed(() => {
+  const a = stats.value.adoptions || {}
+  return [
+    { status: 'pending',  count: a.pending  || 0 },
+    { status: 'approved', count: a.approved || 0 },
+    { status: 'rejected', count: a.rejected || 0 },
+  ].filter(x => x.count > 0)
+})
+const orderStats = computed(() => {
+  const o = stats.value.orders || {}
+  return [
+    { status: 'pending', count: o.pending || 0 },
+    { status: 'paid',    count: o.paid    || 0 },
+    { status: 'refunded', count: o.refunded || 0 },
+    { status: 'cancelled', count: o.cancelled || 0 },
+  ].filter(x => x.count > 0)
+})
+const bookingStats = computed(() => {
+  const b = stats.value.bookings || {}
+  return [
+    { status: 'pending',   count: b.pending   || 0 },
+    { status: 'confirmed', count: b.confirmed || 0 },
+    { status: 'completed', count: b.finished  || 0 },
+    { status: 'cancelled', count: b.cancelled || 0 },
+  ].filter(x => x.count > 0)
+})
+
+const serviceStats = computed(() => {
+  const s = stats.value.services || {}
+  return [
+    { status: 'online',  count: s.online  || 0 },
+    { status: 'pending', count: s.pending || 0 },
+    { status: 'offline', count: s.offline || 0 },
+  ].filter(x => x.count > 0)
+})
+const productStats = computed(() => {
+  const p = stats.value.products || {}
+  return [
+    { status: 'online',  count: p.online  || 0 },
+    { status: 'pending', count: p.pending || 0 },
+    { status: 'offline', count: p.offline || 0 },
+  ].filter(x => x.count > 0)
+})
 
 async function loadStats() {
   statsLoading.value = true
@@ -172,17 +257,23 @@ function loadAll() { loadStats(); loadLogs() }
 onMounted(loadAll)
 
 /* ---- 标签辅助 ---- */
-const petStatusLabel = s => ({ available: '可领养', pending: '待审核', offline: '已下线', adopted: '已领养' })[s] || s
-const petStatusType  = s => ({ available: 'success', pending: 'warning', offline: 'info', adopted: '' })[s] || ''
+const petStatusLabel = s => ({ online: '可领养', pending: '待审核', offline: '已下线', adopted: '已领养' })[s] || s
+const petStatusType  = s => ({ online: 'success', pending: 'warning', offline: 'info', adopted: '' })[s] || ''
 
 const adoptionStatusLabel = s => ({ pending: '待处理', reviewing: '审核中', approved: '已通过', rejected: '已拒绝', supplement: '补充材料', cancelled: '已取消' })[s] || s
 const adoptionStatusType  = s => ({ pending: 'warning', reviewing: 'primary', approved: 'success', rejected: 'danger', supplement: 'warning', cancelled: 'info' })[s] || ''
 
-const orderStatusLabel = s => ({ pending_payment: '待付款', pending_shipment: '待发货', shipped: '已发货', completed: '已完成', cancelled: '已取消', refunding: '退款中', refunded: '已退款' })[s] || s
-const orderStatusType  = s => ({ pending_payment: 'warning', pending_shipment: 'primary', shipped: '', completed: 'success', cancelled: 'info', refunding: 'danger', refunded: 'info' })[s] || ''
+const orderStatusLabel = s => ({ pending: '待付款', paid: '已支付', refunded: '已退款', cancelled: '已取消' })[s] || s
+const orderStatusType  = s => ({ pending: 'warning', paid: 'success', refunded: 'info', cancelled: 'info' })[s] || ''
 
 const bookingStatusLabel = s => ({ pending: '待确认', confirmed: '已确认', cancelled: '已取消', completed: '已完成' })[s] || s
 const bookingStatusType  = s => ({ pending: 'warning', confirmed: 'primary', cancelled: 'info', completed: 'success' })[s] || ''
+
+const serviceStatusLabel = s => ({ online: '已上线', pending: '待审核', offline: '已下线' })[s] || s
+const serviceStatusType  = s => ({ online: 'success', pending: 'warning', offline: 'info' })[s] || ''
+
+const productStatusLabel = s => ({ online: '已上架', pending: '待审核', offline: '已下架' })[s] || s
+const productStatusType  = s => ({ online: 'success', pending: 'warning', offline: 'info' })[s] || ''
 </script>
 
 <style scoped>

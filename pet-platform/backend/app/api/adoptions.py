@@ -38,6 +38,14 @@ def submit_application():
         if not data.get(f):
             return jsonify({'error': f'{f} 不能为空'}), 400
 
+    # 检查是否曾有已通过后被本人取消的申请（满足则自动审批，无需发布方再次审核）
+    prev_cancelled_approved = AdoptionApplication.query.filter_by(
+        pet_id=pet_id,
+        applicant_id=user_id,
+        review_status='cancelled',
+        review_remark='cancelled_from_approved',
+    ).first()
+
     app_obj = AdoptionApplication(
         pet_id=pet_id,
         applicant_id=user_id,
@@ -47,6 +55,27 @@ def submit_application():
         promise_statement=data['promise_statement'],
         contact_info=data.get('contact_info'),
     )
+
+    if prev_cancelled_approved:
+        # 曾被审批通过后主动取消，直接自动审批通过，无需发布方再次审核
+        app_obj.review_status = 'approved'
+        app_obj.review_remark = '曾领养后自行取消，自动重新通过'
+        app_obj.reviewed_at = datetime.utcnow()
+        pet.status = 'adopted'
+        # 将同一宠物其他待审核申请设为已拒绝
+        AdoptionApplication.query.filter(
+            AdoptionApplication.pet_id == pet.pet_id,
+            AdoptionApplication.review_status == 'pending',
+        ).update({'review_status': 'rejected', 'review_remark': '该宠物已被他人领养'})
+        db.session.add(app_obj)
+        db.session.commit()
+        send_notification(
+            app_obj.applicant_id, 'adoption',
+            f'您关于「{pet.pet_name}」的领养申请已自动通过',
+            '由于您曾领养该宠物后主动取消，此次申请已自动审批通过，无需等待审核。'
+        )
+        return jsonify({'message': '申请已自动通过，恭喜您重新领养成功！', 'application': app_obj.to_dict()}), 201
+
     db.session.add(app_obj)
     db.session.commit()
 
@@ -166,9 +195,24 @@ def cancel_application(application_id):
 
     if app_obj.applicant_id != user_id:
         return jsonify({'error': '无权操作'}), 403
-    if app_obj.review_status not in ('pending', 'supplement'):
-        return jsonify({'error': '只能取消待审核或需补材料的申请'}), 400
+    if app_obj.review_status not in ('pending', 'supplement', 'approved'):
+        return jsonify({'error': '只能取消待审核、需补材料或已通过的申请'}), 400
 
-    db.session.delete(app_obj)
+    was_approved = (app_obj.review_status == 'approved')
+
+    # 将申请标记为已取消（保留记录以供后续自动审批逻辑判断）
+    app_obj.review_status = 'cancelled'
+    if was_approved:
+        # 标记为「已通过后取消」，再次申请时可自动审批
+        app_obj.review_remark = 'cancelled_from_approved'
+        # 恢复宠物状态为可领养
+        pet = app_obj.pet
+        pet.status = 'online'
+        send_notification(
+            pet.publisher_id, 'adoption',
+            f'用户已取消对「{pet.pet_name}」的领养',
+            '该宠物已自动重新上架，可接受新的领养申请。'
+        )
+
     db.session.commit()
-    return jsonify({'message': '申请已取消'}), 200
+    return jsonify({'message': '申请已取消', 'pet_restored': was_approved}), 200

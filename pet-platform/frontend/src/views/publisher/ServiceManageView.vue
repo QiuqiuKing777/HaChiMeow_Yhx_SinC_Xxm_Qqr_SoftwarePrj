@@ -75,9 +75,24 @@
     </el-dialog>
 
     <el-dialog v-model="slotDialog" title="时段管理" width="600px">
-      <el-button class="action-btn" type="primary" size="small" @click="showAddSlot = true" style="margin-bottom:12px">
-        添加时段
+      <el-button class="action-btn" type="primary" size="small" @click="showAddSlot = !showAddSlot" style="margin-bottom:12px">
+        {{ showAddSlot ? '收起' : '添加时段' }}
       </el-button>
+
+      <el-form v-if="showAddSlot" :model="slotForm" inline style="margin-bottom:12px">
+        <el-form-item label="日期">
+          <el-date-picker v-model="slotForm.slot_date" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width:140px" />
+        </el-form-item>
+        <el-form-item label="时段">
+          <el-input v-model="slotForm.slot_time" placeholder="如：09:00-11:00" style="width:130px" />
+        </el-form-item>
+        <el-form-item label="容量">
+          <el-input-number v-model="slotForm.capacity" :min="1" style="width:90px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button class="action-btn" type="primary" :loading="slotSaving" @click="submitSlot">确认添加</el-button>
+        </el-form-item>
+      </el-form>
 
       <el-table :data="slots" border size="small">
         <el-table-column label="日期" prop="slot_date" width="120" />
@@ -100,9 +115,12 @@ const saving = ref(false)
 const dialogVisible = ref(false)
 const slotDialog = ref(false)
 const showAddSlot = ref(false)
+const slotSaving = ref(false)
 const editId = ref(null)
 const currentServiceId = ref(null)
 const slots = ref([])
+
+const slotForm = reactive({ slot_date: '', slot_time: '', capacity: 5 })
 
 const imageFile = ref(null)
 const imagePreview = ref('')
@@ -201,9 +219,31 @@ async function saveService() {
 }
 
 async function deleteService(row) {
-  await servicesApi.remove(row.service_id)
-  ElMessage.success('已删除')
-  load()
+  try {
+    await servicesApi.remove(row.service_id)
+    ElMessage.success('已删除')
+    load()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.error || '删除失败')
+  }
+}
+
+async function submitSlot() {
+  if (!slotForm.slot_date || !slotForm.slot_time) {
+    ElMessage.warning('请填写日期和时段')
+    return
+  }
+  slotSaving.value = true
+  try {
+    await servicesApi.addSlot(currentServiceId.value, { ...slotForm })
+    ElMessage.success('时段已添加')
+    Object.assign(slotForm, { slot_date: '', slot_time: '', capacity: 5 })
+    showAddSlot.value = false
+    const res = await servicesApi.slots(currentServiceId.value)
+    slots.value = res.items || res || []
+  } finally {
+    slotSaving.value = false
+  }
 }
 
 async function openSlotDialog(svc) {

@@ -12,7 +12,7 @@
     <!-- 核心数据卡片 -->
     <el-row :gutter="16" v-loading="loading" class="stat-row">
       <el-col :xs="12" :sm="6" v-for="card in statCards" :key="card.label">
-        <div class="stat-card" :style="{ '--card-color': card.color }">
+        <div class="stat-card" :style="{ '--card-color': card.color }" style="cursor:pointer" @click="$router.push(card.to)">
           <div class="stat-card-main">
             <div>
               <div class="stat-value">{{ card.value }}</div>
@@ -120,10 +120,10 @@ const today = new Date().toLocaleDateString('zh-CN', {
 })
 
 const statCards = computed(() => [
-  { label: '注册用户',   value: stats.value.users?.total || 0,           color: '#409eff', icon: User,        tag: '全部用户' },
-  { label: '在架商品',   value: stats.value.products?.online || 0,       color: '#67c23a', icon: ShoppingBag, tag: '上架中' },
-  { label: '待审核申请', value: stats.value.adoptions?.pending || 0,     color: '#e6a23c', icon: Tickets,     tag: '需处理' },
-  { label: '服务预约',   value: stats.value.bookings?.total || 0,        color: '#f56c6c', icon: Calendar,    tag: '累计' },
+  { label: '注册用户',   value: stats.value.users?.total || 0,           color: '#409eff', icon: User,        tag: '全部用户', to: '/admin/users' },
+  { label: '在架商品',   value: stats.value.products?.online || 0,       color: '#67c23a', icon: ShoppingBag, tag: '上架中',  to: '/admin/review?tab=products' },
+  { label: '待审核申请', value: stats.value.adoptions?.pending || 0,     color: '#e6a23c', icon: Tickets,     tag: '需处理',  to: '/admin/review?tab=pets' },
+  { label: '服务预约',   value: stats.value.bookings?.total || 0,        color: '#f56c6c', icon: Calendar,    tag: '累计',   to: '/admin/stats' },
 ])
 
 const detailItems = computed(() => {

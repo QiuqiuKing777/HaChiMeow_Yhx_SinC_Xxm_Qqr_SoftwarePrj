@@ -119,7 +119,7 @@ class AdoptionApplication(db.Model):
     family_attitude   = db.Column(db.Text)
     promise_statement = db.Column(db.Text, nullable=False)
     contact_info      = db.Column(db.String(100))
-    review_status     = db.Column(db.Enum('pending', 'approved', 'rejected', 'supplement'), default='pending')
+    review_status     = db.Column(db.Enum('pending', 'approved', 'rejected', 'supplement', 'cancelled'), default='pending')
     review_remark     = db.Column(db.Text)
     reviewed_by       = db.Column(db.BigInteger, db.ForeignKey('users.user_id'))
     reviewed_at       = db.Column(db.DateTime)

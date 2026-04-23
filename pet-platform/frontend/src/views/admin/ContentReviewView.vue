@@ -16,7 +16,7 @@
             <el-input v-model="pets.keyword" placeholder="搜索宠物名称" clearable @change="loadPets" style="width:200px" />
             <el-select v-model="pets.status" placeholder="状态筛选" clearable @change="loadPets" style="width:140px">
               <el-option label="待审核" value="pending" />
-              <el-option label="已上线" value="available" />
+              <el-option label="已上线" value="online" />
               <el-option label="已下线" value="offline" />
             </el-select>
             <el-button type="primary" @click="loadPets">搜索</el-button>
@@ -29,9 +29,9 @@
                 <el-avatar :size="40" :src="row.cover_image" shape="square" style="background:#e6a23c">宠</el-avatar>
               </template>
             </el-table-column>
-            <el-table-column prop="name" label="名称" min-width="150" />
+            <el-table-column prop="pet_name" label="名称" min-width="150" />
             <el-table-column prop="species" label="种类" width="80" />
-            <el-table-column prop="age" label="年龄" width="80" />
+            <el-table-column prop="age_desc" label="年龄" width="80" />
             <el-table-column label="发布方" width="120">
               <template #default="{ row }">{{ row.publisher?.nickname }}</template>
             </el-table-column>
@@ -45,8 +45,8 @@
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="180">
               <template #default="{ row }">
-                <el-button v-if="row.status !== 'available'" type="success" size="small" @click="setPetStatus(row, 'available')">上线</el-button>
-                <el-button v-if="row.status === 'available'" type="danger" size="small" @click="setPetStatus(row, 'offline')">下线</el-button>
+                <el-button v-if="row.status !== 'online'" type="success" size="small" @click="setPetStatus(row, 'online')">上线</el-button>
+                <el-button v-if="row.status === 'online'" type="danger" size="small" @click="setPetStatus(row, 'offline')">下线</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -62,8 +62,9 @@
           <div class="filter-bar">
             <el-input v-model="products.keyword" placeholder="搜索商品名称" clearable @change="loadProducts" style="width:200px" />
             <el-select v-model="products.status" placeholder="状态筛选" clearable @change="loadProducts" style="width:140px">
-              <el-option label="上架" value="on_sale" />
-              <el-option label="下架" value="off_sale" />
+              <el-option label="待审核" value="pending" />
+              <el-option label="上架" value="online" />
+              <el-option label="下架" value="offline" />
             </el-select>
             <el-button type="primary" @click="loadProducts">搜索</el-button>
           </div>
@@ -75,7 +76,7 @@
                 <el-avatar :size="40" :src="row.cover_image" shape="square" style="background:#67c23a">品</el-avatar>
               </template>
             </el-table-column>
-            <el-table-column prop="name" label="商品名称" min-width="150" />
+            <el-table-column prop="product_name" label="商品名称" min-width="150" />
             <el-table-column prop="category" label="分类" width="100" />
             <el-table-column label="价格" width="100">
               <template #default="{ row }">¥{{ row.price }}</template>
@@ -86,15 +87,15 @@
             </el-table-column>
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'on_sale' ? 'success' : 'info'">
-                  {{ row.status === 'on_sale' ? '上架' : '下架' }}
+                <el-tag :type="row.status === 'online' ? 'success' : row.status === 'pending' ? 'warning' : 'info'">
+                  {{ row.status === 'online' ? '上架' : row.status === 'pending' ? '待审核' : '下架' }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="140">
               <template #default="{ row }">
-                <el-button v-if="row.status !== 'on_sale'" type="success" size="small" @click="setProductStatus(row, 'on_sale')">上架</el-button>
-                <el-button v-if="row.status === 'on_sale'" type="danger" size="small" @click="setProductStatus(row, 'off_sale')">下架</el-button>
+                <el-button v-if="row.status !== 'online'" type="success" size="small" @click="setProductStatus(row, 'online')">上架</el-button>
+                <el-button v-if="row.status === 'online'" type="danger" size="small" @click="setProductStatus(row, 'offline')">下架</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -110,15 +111,16 @@
           <div class="filter-bar">
             <el-input v-model="services.keyword" placeholder="搜索服务名称" clearable @change="loadServices" style="width:200px" />
             <el-select v-model="services.status" placeholder="状态筛选" clearable @change="loadServices" style="width:140px">
-              <el-option label="上线" value="active" />
-              <el-option label="下线" value="inactive" />
+              <el-option label="待审核" value="pending" />
+              <el-option label="上线" value="online" />
+              <el-option label="下线" value="offline" />
             </el-select>
             <el-button type="primary" @click="loadServices">搜索</el-button>
           </div>
 
           <el-table :data="services.list" v-loading="services.loading" stripe class="admin-table" style="width:100%;font-size:16px">
             <el-table-column prop="service_id" label="ID" width="70" />
-            <el-table-column prop="name" label="服务名称" min-width="150" />
+            <el-table-column prop="service_name" label="服务名称" min-width="150" />
             <el-table-column prop="category" label="分类" width="100" />
             <el-table-column label="价格" width="100">
               <template #default="{ row }">¥{{ row.price }}</template>
@@ -128,15 +130,15 @@
             </el-table-column>
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-                  {{ row.status === 'active' ? '上线' : '下线' }}
+                <el-tag :type="row.status === 'online' ? 'success' : row.status === 'pending' ? 'warning' : 'info'">
+                  {{ row.status === 'online' ? '上线' : row.status === 'pending' ? '待审核' : '下线' }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="160">
               <template #default="{ row }">
-                <el-button v-if="row.status !== 'active'" type="success" size="small" @click="setServiceStatus(row, 'active')">上线</el-button>
-                <el-button v-if="row.status === 'active'" type="danger" size="small" @click="setServiceStatus(row, 'inactive')">下线</el-button>
+                <el-button v-if="row.status !== 'online'" type="success" size="small" @click="setServiceStatus(row, 'online')">上线</el-button>
+                <el-button v-if="row.status === 'online'" type="danger" size="small" @click="setServiceStatus(row, 'offline')">下线</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -170,8 +172,8 @@ async function loadPets() {
   } finally { pets.loading = false }
 }
 async function setPetStatus(row, status) {
-  const label = status === 'available' ? '上线' : '下线'
-  await ElMessageBox.confirm(`确认要${label}宠物「${row.name}」吗？`, '操作确认', { type: 'warning' })
+  const label = status === 'online' ? '上线' : '下线'
+  await ElMessageBox.confirm(`确认要${label}宠物「${row.pet_name}」吗？`, '操作确认', { type: 'warning' })
   await adminApi.setPetStatus(row.pet_id, { status })
   ElMessage.success(`已${label}`)
   loadPets()
@@ -187,8 +189,8 @@ async function loadProducts() {
   } finally { products.loading = false }
 }
 async function setProductStatus(row, status) {
-  const label = status === 'on_sale' ? '上架' : '下架'
-  await ElMessageBox.confirm(`确认要${label}商品「${row.name}」吗？`, '操作确认', { type: 'warning' })
+  const label = status === 'online' ? '上架' : '下架'
+  await ElMessageBox.confirm(`确认要${label}商品「${row.product_name}」吗？`, '操作确认', { type: 'warning' })
   await adminApi.setProductStatus(row.product_id, { status })
   ElMessage.success(`已${label}`)
   loadProducts()
@@ -204,8 +206,8 @@ async function loadServices() {
   } finally { services.loading = false }
 }
 async function setServiceStatus(row, status) {
-  const label = status === 'active' ? '上线' : '下线'
-  await ElMessageBox.confirm(`确认要${label}服务「${row.name}」吗？`, '操作确认', { type: 'warning' })
+  const label = status === 'online' ? '上线' : '下线'
+  await ElMessageBox.confirm(`确认要${label}服务「${row.service_name}」吗？`, '操作确认', { type: 'warning' })
   await adminApi.setServiceStatus(row.service_id, { status })
   ElMessage.success(`已${label}`)
   loadServices()
@@ -217,8 +219,8 @@ function onTabChange(tab) {
   if (tab === 'services' && !services.list.length) loadServices()
 }
 
-const statusType = s => ({ available: 'success', pending: 'warning', offline: 'info', adopted: '' })[s] || ''
-const petStatusLabel = s => ({ available: '可领养', pending: '待审核', offline: '已下线', adopted: '已领养' })[s] || s
+const statusType = s => ({ online: 'success', pending: 'warning', offline: 'info', adopted: '' })[s] || ''
+const petStatusLabel = s => ({ online: '可领养', pending: '待审核', offline: '已下线', adopted: '已领养' })[s] || s
 
 onMounted(() => {
   if (activeTab.value === 'pets') loadPets()

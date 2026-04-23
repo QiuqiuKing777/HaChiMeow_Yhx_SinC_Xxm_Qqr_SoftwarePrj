@@ -71,6 +71,8 @@ def admin_list_pets():
     query = Pet.query
     if status:
         query = query.filter(Pet.status == status)
+    else:
+        query = query.filter(Pet.status != 'offline')
     query = query.order_by(Pet.created_at.desc())
     result = paginate_query(query, page, per_page)
     result['items'] = [p.to_dict() for p in result['items']]
@@ -108,9 +110,16 @@ def admin_list_products():
     query = Product.query
     if status:
         query = query.filter(Product.status == status)
+    else:
+        query = query.filter(Product.status != 'offline')
     query = query.order_by(Product.created_at.desc())
     result = paginate_query(query, page, per_page)
-    result['items'] = [p.to_dict() for p in result['items']]
+    items = []
+    for p in result['items']:
+        d = p.to_dict()
+        d['publisher'] = p.publisher.to_public_dict() if p.publisher else None
+        items.append(d)
+    result['items'] = items
     return jsonify(result), 200
 
 
@@ -145,6 +154,8 @@ def admin_list_services():
     query = Service.query
     if status:
         query = query.filter(Service.status == status)
+    else:
+        query = query.filter(Service.status != 'offline')
     query = query.order_by(Service.created_at.desc())
     result = paginate_query(query, page, per_page)
     result['items'] = [s.to_dict() for s in result['items']]
@@ -188,15 +199,26 @@ def get_stats():
             'online':  Pet.query.filter_by(status='online').count(),
             'adopted': Pet.query.filter_by(status='adopted').count(),
             'pending': Pet.query.filter_by(status='pending').count(),
+            'offline': Pet.query.filter_by(status='offline').count(),
         },
         'products': {
-            'total':  Product.query.count(),
-            'online': Product.query.filter_by(status='online').count(),
+            'total':   Product.query.count(),
+            'online':  Product.query.filter_by(status='online').count(),
+            'offline': Product.query.filter_by(status='offline').count(),
+            'pending': Product.query.filter_by(status='pending').count(),
+        },
+        'services': {
+            'total':   Service.query.count(),
+            'online':  Service.query.filter_by(status='online').count(),
+            'offline': Service.query.filter_by(status='offline').count(),
+            'pending': Service.query.filter_by(status='pending').count(),
         },
         'orders': {
-            'total':   Order.query.count(),
-            'pending': Order.query.filter_by(pay_status='pending').count(),
-            'paid':    Order.query.filter_by(pay_status='paid').count(),
+            'total':     Order.query.count(),
+            'pending':   Order.query.filter_by(pay_status='pending').count(),
+            'paid':      Order.query.filter_by(pay_status='paid').count(),
+            'refunded':  Order.query.filter_by(pay_status='refunded').count(),
+            'cancelled': Order.query.filter_by(pay_status='cancelled').count(),
             'total_amount': float(
                 db.session.query(func.sum(Order.total_amount))
                 .filter(Order.pay_status == 'paid')
@@ -207,11 +229,14 @@ def get_stats():
             'total':    AdoptionApplication.query.count(),
             'pending':  AdoptionApplication.query.filter_by(review_status='pending').count(),
             'approved': AdoptionApplication.query.filter_by(review_status='approved').count(),
+            'rejected': AdoptionApplication.query.filter_by(review_status='rejected').count(),
         },
         'bookings': {
-            'total':    Booking.query.count(),
-            'pending':  Booking.query.filter_by(booking_status='pending').count(),
-            'finished': Booking.query.filter_by(booking_status='finished').count(),
+            'total':     Booking.query.count(),
+            'pending':   Booking.query.filter_by(booking_status='pending').count(),
+            'confirmed': Booking.query.filter_by(booking_status='confirmed').count(),
+            'finished':  Booking.query.filter_by(booking_status='finished').count(),
+            'cancelled': Booking.query.filter_by(booking_status='cancelled').count(),
         },
     }
     return jsonify(stats), 200

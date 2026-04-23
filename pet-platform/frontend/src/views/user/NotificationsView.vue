@@ -32,7 +32,7 @@ const loading = ref(false)
 async function load() {
   loading.value = true
   try {
-    const res = await userApi.getNotifications({ page: page.value, per_page: 20 })
+    const res = await userApi.notifications({ page: page.value, per_page: 20 })
     notifications.value = res.items || []
     total.value = res.total || 0
   } finally {
@@ -42,13 +42,13 @@ async function load() {
 
 async function readOne(n) {
   if (!n.is_read) {
-    await userApi.readNotification(n.notification_id)
+    await userApi.markRead(n.notification_id)
     n.is_read = true
   }
 }
 
 async function readAll() {
-  await userApi.readAllNotifications()
+  await userApi.markAllRead()
   notifications.value.forEach(n => n.is_read = true)
 }
 

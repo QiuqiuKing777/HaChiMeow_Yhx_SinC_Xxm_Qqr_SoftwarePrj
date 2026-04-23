@@ -132,7 +132,7 @@ def my_pets():
     per_page = request.args.get('per_page', 12, type=int)
     status = request.args.get('status', '')
 
-    query = Pet.query.filter_by(publisher_id=user_id)
+    query = Pet.query.filter_by(publisher_id=user_id).filter(Pet.status != 'offline')
     if status:
         query = query.filter(Pet.status == status)
 

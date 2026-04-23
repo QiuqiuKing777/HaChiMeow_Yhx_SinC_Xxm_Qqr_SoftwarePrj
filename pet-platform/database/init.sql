@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS adoption_applications (
     family_attitude TEXT                                 COMMENT '家庭成员态度',
     promise_statement TEXT NOT NULL                      COMMENT '领养承诺书',
     contact_info   VARCHAR(100)                          COMMENT '联系方式',
-    review_status  ENUM('pending','approved','rejected','supplement') NOT NULL DEFAULT 'pending' COMMENT '审核状态',
+    review_status  ENUM('pending','approved','rejected','supplement','cancelled') NOT NULL DEFAULT 'pending' COMMENT '审核状态',
     review_remark  TEXT                                  COMMENT '审核意见',
     reviewed_by    BIGINT                                COMMENT '审核人ID',
     reviewed_at    DATETIME                              COMMENT '审核时间',

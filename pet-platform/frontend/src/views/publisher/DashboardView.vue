@@ -12,7 +12,7 @@
     <!-- 核心数据卡片 -->
     <el-row :gutter="16" v-loading="loading" class="stat-row">
       <el-col :xs="12" :sm="6" v-for="card in statCards" :key="card.label">
-        <div class="stat-card" :style="{ '--card-color': card.color }">
+        <div class="stat-card" :style="{ '--card-color': card.color }" style="cursor:pointer" @click="$router.push(card.to)">
           <div class="stat-card-main">
             <div>
               <div class="stat-value">{{ card.value }}</div>
@@ -125,10 +125,10 @@ const today = new Date().toLocaleDateString('zh-CN', {
 })
 
 const statCards = computed(() => [
-  { label: '我的宠物',   value: (pets.value.available || 0) + (pets.value.adopted || 0) + (pets.value.reviewing || 0), color: '#409eff', icon: PieChart,   tag: '累计发布' },
-  { label: '我的商品',   value: totalProducts.value,  color: '#67c23a', icon: ShoppingBag, tag: '在架商品'  },
-  { label: '待审核申请', value: totalApps.value,       color: '#e6a23c', icon: Tickets,     tag: '需处理'    },
-  { label: '待处理订单', value: totalOrders.value,     color: '#f56c6c', icon: List,        tag: '待发货'    },
+  { label: '我的宠物',   value: (pets.value.available || 0) + (pets.value.adopted || 0) + (pets.value.reviewing || 0), color: '#409eff', icon: PieChart,   tag: '累计发布', to: '/publisher/pets'         },
+  { label: '我的商品',   value: totalProducts.value,  color: '#67c23a', icon: ShoppingBag, tag: '在架商品',  to: '/publisher/products'     },
+  { label: '待审核申请', value: totalApps.value,       color: '#e6a23c', icon: Tickets,     tag: '需处理',    to: '/publisher/applications' },
+  { label: '待处理订单', value: totalOrders.value,     color: '#f56c6c', icon: List,        tag: '待发货',    to: '/publisher/orders'       },
 ])
 
 const quickActions = [

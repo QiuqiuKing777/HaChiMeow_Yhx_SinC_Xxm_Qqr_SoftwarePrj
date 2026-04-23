@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.models import Service, ServiceSlot, User
+from app.models import Service, ServiceSlot, User, Booking
 from app.utils import role_required, paginate_query
 
 services_bp = Blueprint('services', __name__, url_prefix='/api/services')
@@ -121,7 +121,7 @@ def my_services():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 12, type=int)
 
-    query = Service.query.filter_by(publisher_id=user_id).order_by(Service.created_at.desc())
+    query = Service.query.filter_by(publisher_id=user_id).filter(Service.status != 'offline').order_by(Service.created_at.desc())
     result = paginate_query(query, page, per_page)
     result['items'] = [serialize_service(s) for s in result['items']]
     return jsonify(result), 200
@@ -217,6 +217,29 @@ def update_service(service_id):
 
     db.session.commit()
     return jsonify({'message': '更新成功', 'service': serialize_service(service)}), 200
+
+
+@services_bp.route('/<int:service_id>', methods=['DELETE'])
+@jwt_required()
+def delete_service(service_id):
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    service = Service.query.get_or_404(service_id)
+
+    if service.publisher_id != user_id and user.role_type != 'admin':
+        return jsonify({'error': '无权操作'}), 403
+
+    # 若有未完成预约，禁止删除
+    active = Booking.query.filter(
+        Booking.service_id == service_id,
+        Booking.booking_status.in_(['pending', 'confirmed'])
+    ).count()
+    if active > 0:
+        return jsonify({'error': '该服务存在未完成的预约，无法删除'}), 400
+
+    db.session.delete(service)
+    db.session.commit()
+    return jsonify({'message': '服务已删除'}), 200
 
 
 @services_bp.route('/<int:service_id>/slots', methods=['POST'])

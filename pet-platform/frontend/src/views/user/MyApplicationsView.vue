@@ -20,10 +20,21 @@
           </template>
         </el-table-column>
         <el-table-column label="审核意见" prop="review_remark" width="160" show-overflow-tooltip />
-        <el-table-column label="操作" width="80">
+        <el-table-column label="操作" width="100">
           <template #default="{ row }">
-            <el-popconfirm title="确定撤销申请？" @confirm="cancel(row)" v-if="row.review_status === 'pending'">
+            <el-popconfirm
+              v-if="row.review_status === 'pending' || row.review_status === 'supplement'"
+              title="确定撤销申请？"
+              @confirm="cancel(row)"
+            >
               <template #reference><el-button size="small" type="danger">撤销</el-button></template>
+            </el-popconfirm>
+            <el-popconfirm
+              v-else-if="row.review_status === 'approved'"
+              title="确定取消领养？取消后宠物将重新上架，下次申请将自动通过。"
+              @confirm="cancel(row)"
+            >
+              <template #reference><el-button size="small" type="warning">取消领养</el-button></template>
             </el-popconfirm>
           </template>
         </el-table-column>
@@ -46,8 +57,8 @@ const total   = ref(0)
 const page    = ref(1)
 const loading = ref(false)
 
-const statusLabel = s => ({ pending:'审核中', approved:'已通过', rejected:'已拒绝' })[s] || s
-const statusType  = s => ({ pending:'warning', approved:'success', rejected:'danger' })[s] || ''
+const statusLabel = s => ({ pending:'审核中', approved:'已通过', rejected:'已拒绝', supplement:'需补材料', cancelled:'已取消' })[s] || s
+const statusType  = s => ({ pending:'warning', approved:'success', rejected:'danger', supplement:'info', cancelled:'' })[s] || ''
 
 async function load() {
   loading.value = true
@@ -61,8 +72,12 @@ async function load() {
 }
 
 async function cancel(row) {
-  await adoptionsApi.cancel(row.application_id)
-  ElMessage.success('已撤销')
+  const res = await adoptionsApi.cancel(row.application_id)
+  if (res?.pet_restored) {
+    ElMessage.success('已取消领养，宠物已重新上架')
+  } else {
+    ElMessage.success('已撤销')
+  }
   load()
 }
 

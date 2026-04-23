@@ -122,7 +122,7 @@ def publisher_orders():
             (OrderItem.order_id == Order.order_id) &
             (OrderItem.product_id.in_(product_ids))
         )
-    ).order_by(Order.created_at.desc())
+    ).filter(Order.pay_status != 'cancelled').order_by(Order.created_at.desc())
     result = paginate_query(query, page, per_page)
     result['items'] = [o.to_dict() for o in result['items']]
     return jsonify(result), 200

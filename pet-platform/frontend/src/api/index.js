@@ -109,6 +109,7 @@ export const servicesApi = {
   myServices: params => http.get('/services/my', { params }),
   create:     data   => http.post('/services', data),
   update:     (id, data) => http.put(`/services/${id}`, data),
+  remove:     id     => http.delete(`/services/${id}`),
   addSlot:    (id, data) => http.post(`/services/${id}/slots`, data),
 }
 

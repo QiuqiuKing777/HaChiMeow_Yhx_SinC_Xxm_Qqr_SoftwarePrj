@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.models import Product, ProductImage, User
+from app.models import Product, ProductImage, User, CartItem, OrderItem
 from app.utils import role_required, paginate_query
 
 products_bp = Blueprint('products', __name__, url_prefix='/api/products')
@@ -119,7 +119,7 @@ def my_products():
     per_page = request.args.get('per_page', 12, type=int)
     status = request.args.get('status', '')
 
-    query = Product.query.filter_by(publisher_id=user_id)
+    query = Product.query.filter_by(publisher_id=user_id).filter(Product.status != 'offline')
     if status:
         query = query.filter(Product.status == status)
 
@@ -260,6 +260,15 @@ def delete_product(product_id):
     if product.publisher_id != user_id and user.role_type != 'admin':
         return jsonify({'error': '无权操作'}), 403
 
-    product.status = 'offline'
+    # 若该商品已有订单记录，禁止删除以保留交易历史
+    order_count = OrderItem.query.filter_by(product_id=product_id).count()
+    if order_count > 0:
+        return jsonify({'error': '该商品已有订单记录，无法删除'}), 400
+
+    # 先删除购物车中的关联项
+    CartItem.query.filter_by(product_id=product_id).delete()
+
+    # 物理删除商品（product_images 会通过 cascade 自动删除）
+    db.session.delete(product)
     db.session.commit()
-    return jsonify({'message': '商品已下架'}), 200
+    return jsonify({'message': '商品已删除'}), 200

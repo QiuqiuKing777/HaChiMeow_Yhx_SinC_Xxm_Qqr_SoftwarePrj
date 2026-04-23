@@ -157,9 +157,7 @@ function handlePetImageChange(file) {
     return
   }
   imageFile.value = raw
-  // imagePreview.value = URL.createObjectURL(raw)
-  imagePreview.value = pet.cover_image
-
+  imagePreview.value = URL.createObjectURL(raw)
 }
 
 
@@ -187,8 +185,7 @@ function openDialog(pet = null) {
       health_status: pet.health_status || '',
       description: pet.description || '',
     })
-    // imagePreview.value = pet.cover_image ? '/' + pet.cover_image : '/NKU.png'
-    imagePreview.value = getImageUrl(pet.cover_image)
+    imagePreview.value = pet.cover_image || '/NKU.png'
   } else {
     editId.value = null
   }
@@ -220,9 +217,13 @@ async function savePet() {
 }
 
 async function deletePet(row) {
-  await petsApi.remove(row.pet_id)
-  ElMessage.success('已删除')
-  load()
+  try {
+    await petsApi.remove(row.pet_id)
+    ElMessage.success('已删除')
+    load()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.error || '删除失败')
+  }
 }
 
 onMounted(load)

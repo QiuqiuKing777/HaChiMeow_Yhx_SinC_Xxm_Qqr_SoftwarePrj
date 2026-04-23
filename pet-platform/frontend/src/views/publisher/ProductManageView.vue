@@ -192,9 +192,13 @@ async function saveProduct() {
 }
 
 async function deleteProduct(row) {
-  await productsApi.remove(row.product_id)
-  ElMessage.success('已删除')
-  load()
+  try {
+    await productsApi.remove(row.product_id)
+    ElMessage.success('已删除')
+    load()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.error || '删除失败')
+  }
 }
 
 onMounted(load)
