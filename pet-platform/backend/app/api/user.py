@@ -242,8 +242,6 @@ def send_message():
 
     if not receiver_id or not content:
         return jsonify({'error': 'receiver_id 和 content 不能为空'}), 400
-    if receiver_id == user_id:
-        return jsonify({'error': '不能给自己发消息'}), 400
 
     msg = Message(sender_id=user_id, receiver_id=receiver_id, pet_id=pet_id, content=content)
     db.session.add(msg)
