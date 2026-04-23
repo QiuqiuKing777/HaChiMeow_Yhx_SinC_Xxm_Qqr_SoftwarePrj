@@ -8,10 +8,12 @@
         </el-form-item>
         <el-form-item>
           <el-select v-model="query.category" placeholder="服务类别" clearable style="width:140px">
-            <el-option label="美容护理" value="grooming" />
-            <el-option label="医疗保健" value="medical" />
-            <el-option label="寄养训练" value="boarding" />
-            <el-option label="其他" value="other" />
+            <el-option label="美容" value="美容" />
+            <el-option label="医疗" value="医疗" />
+            <el-option label="上门" value="上门" />
+            <el-option label="洗护" value="洗护" />
+            <el-option label="寄养" value="寄养" />
+            <el-option label="其他" value="其他" />
           </el-select>
         </el-form-item>
         <el-form-item>

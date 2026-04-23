@@ -125,7 +125,7 @@ const today = new Date().toLocaleDateString('zh-CN', {
 })
 
 const statCards = computed(() => [
-  { label: '我的宠物',   value: (pets.value.available || 0) + (pets.value.adopted || 0) + (pets.value.reviewing || 0), color: '#409eff', icon: PieChart,   tag: '累计发布', to: '/publisher/pets'         },
+  { label: '我的宠物',   value: (pets.value.online || 0) + (pets.value.adopted || 0) + (pets.value.pending || 0), color: '#409eff', icon: PieChart,   tag: '累计发布', to: '/publisher/pets'         },
   { label: '我的商品',   value: totalProducts.value,  color: '#67c23a', icon: ShoppingBag, tag: '在架商品',  to: '/publisher/products'     },
   { label: '待审核申请', value: totalApps.value,       color: '#e6a23c', icon: Tickets,     tag: '需处理',    to: '/publisher/applications' },
   { label: '待处理订单', value: totalOrders.value,     color: '#f56c6c', icon: List,        tag: '待发货',    to: '/publisher/orders'       },
@@ -179,9 +179,9 @@ function initBarChart() {
 function initPieChart() {
   if (!pieChartRef.value) return
   pieChart = echarts.init(pieChartRef.value)
-  const available = pets.value.available || 0
+  const online = pets.value.online || 0
   const adopted   = pets.value.adopted   || 0
-  const reviewing = pets.value.reviewing || 0
+  const pending = pets.value.pending || 0
   pieChart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { bottom: 0, textStyle: { color: '#606266', fontSize: 14 } },
@@ -193,9 +193,9 @@ function initPieChart() {
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
       data: [
-        { value: available, name: '可领养', itemStyle: { color: '#409eff' } },
+        { value: online, name: '可领养', itemStyle: { color: '#409eff' } },
         { value: adopted,   name: '已领养', itemStyle: { color: '#67c23a' } },
-        { value: reviewing, name: '审核中', itemStyle: { color: '#e6a23c' } },
+        { value: pending, name: '审核中', itemStyle: { color: '#e6a23c' } },
       ]
     }]
   })
@@ -216,9 +216,9 @@ async function loadData() {
     if (myPets.status === 'fulfilled') {
       const items = myPets.value.items || []
       pets.value = {
-        available: items.filter(p => p.status === 'available').length,
+        online: items.filter(p => p.status === 'online').length,
         adopted:   items.filter(p => p.status === 'adopted').length,
-        reviewing: items.filter(p => p.status === 'reviewing').length,
+        pending: items.filter(p => p.status === 'pending').length,
       }
     }
     if (myProducts.status === 'fulfilled') totalProducts.value = myProducts.value.total || 0

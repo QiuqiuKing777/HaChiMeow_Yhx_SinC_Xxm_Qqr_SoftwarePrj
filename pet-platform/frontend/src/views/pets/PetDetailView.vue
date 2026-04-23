@@ -43,7 +43,7 @@
           <div class="actions">
             <template v-if="pet.status === 'online'">
               <el-button type="primary" size="large" @click="goApply" v-if="userStore.isUser">申请领养</el-button>
-              <el-button size="large" @click="goMessage">咨询发布方</el-button>
+              <el-button size="large" @click="goMessage">{{ messageButtonText }}</el-button>
             </template>
             <el-tag type="info" size="large" v-else>{{ statusLabel }}</el-tag>
           </div>
@@ -85,6 +85,7 @@ const reviews   = ref([])
 const loading   = ref(false)
 const isFav     = ref(false)
 const favIcon   = computed(() => isFav.value ? StarFilled : Star)
+const messageButtonText = computed(() => userStore.isPublisher ? '接受咨询' : '咨询发布方')
 
 const genderLabel  = computed(() => ({ male:'公', female:'母', unknown:'性别未知' })[pet.value?.gender] || '')
 const statusLabel  = computed(() => ({ adopted:'已被领养', offline:'已下架', pending:'审核中' })[pet.value?.status] || '')
@@ -122,6 +123,10 @@ function goApply() {
 
 function goMessage() {
   if (!userStore.isLoggedIn) return router.push('/login')
+  if (userStore.isPublisher && userStore.userInfo?.user_id === pet.value.publisher_id) {
+    router.push('/messages')
+    return
+  }
   router.push({ path: '/messages', query: { to: pet.value.publisher_id, pet: pet.value.pet_id } })
 }
 

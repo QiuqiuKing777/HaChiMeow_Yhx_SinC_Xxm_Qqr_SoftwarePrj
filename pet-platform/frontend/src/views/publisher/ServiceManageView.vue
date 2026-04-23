@@ -45,7 +45,16 @@
     <el-dialog v-model="dialogVisible" :title="editId ? '编辑服务' : '发布服务'" width="540px">
       <el-form :model="form" label-width="90px">
         <el-form-item label="服务名称"><el-input v-model="form.service_name" /></el-form-item>
-        <el-form-item label="服务类别"><el-input v-model="form.category" /></el-form-item>
+        <el-form-item label="服务类别">
+          <el-select v-model="form.category" placeholder="请选择服务类别" style="width: 100%;">
+            <el-option label="美容" value="美容" />
+            <el-option label="医疗" value="医疗" />
+            <el-option label="上门" value="上门" />
+            <el-option label="洗护" value="洗护" />
+            <el-option label="寄养" value="寄养" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="价格"><el-input-number v-model="form.price" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="服务时长"><el-input v-model="form.duration" placeholder="如：约2小时" /></el-form-item>
         <el-form-item label="服务地点"><el-input v-model="form.location" /></el-form-item>
@@ -58,11 +67,11 @@
               :auto-upload="false"
               :before-upload="beforeImageUpload"
               :on-change="handleServiceImageChange"
-              accept=".png,.jpg,.jpeg,.svg"
+              accept=".png,.jpg,.jpeg,.svg,.webp,.gif"
             >
               <el-button class="action-btn" type="primary" plain>选择图片</el-button>
             </el-upload>
-            <div class="upload-tip">仅支持 PNG / JPG / SVG</div>
+            <div class="upload-tip">支持 PNG / JPG / JPEG / SVG / WEBP / GIF</div>
             <img v-if="imagePreview" :src="imagePreview" class="preview-img" />
           </div>
         </el-form-item>
@@ -148,18 +157,18 @@ function resetForm() {
 }
 
 function beforeImageUpload(file) {
-  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const allowed = ['image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
   const ok = allowed.includes(file.type)
-  if (!ok) ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+  if (!ok) ElMessage.error('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式')
   return false
 }
 
 function handleServiceImageChange(file) {
   const raw = file.raw
   if (!raw) return
-  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const allowed = ['image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
   if (!allowed.includes(raw.type)) {
-    ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+    ElMessage.error('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式')
     return
   }
   imageFile.value = raw

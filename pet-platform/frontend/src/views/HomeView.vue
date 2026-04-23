@@ -59,14 +59,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import PetCard from '@/components/PetCard.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { petsApi, productsApi } from '@/api'
+import { useUserStore } from '@/stores/user'
 
 const recommendPets = ref([])
 const hotProducts   = ref([])
+const userStore = useUserStore()
 
 const banners = [
   { title: '给它一个家', desc: '每一只流浪动物都值得被爱', bg: 'linear-gradient(135deg,#667eea,#764ba2)', link: '/pets', btn: '立即领养' },
@@ -74,12 +76,14 @@ const banners = [
   { title: '专业宠物服务', desc: '洗护 · 寄养 · 上门喂养', bg: 'linear-gradient(135deg,#4facfe,#00f2fe)', link: '/services', btn: '预约服务' },
 ]
 
-const quickEntries = [
+const quickEntries = computed(() => [
   { icon: '🐱', title: '领养宠物', desc: '找到你的缘分宝贝', path: '/pets' },
   { icon: '🛒', title: '宠物用品', desc: '品牌正品，放心购买', path: '/products' },
   { icon: '✂️', title: '宠物服务', desc: '洗护美容寄养一站式', path: '/services' },
-  { icon: '💬', title: '咨询发布方', desc: '直接沟通，快速匹配', path: '/pets' },
-]
+  userStore.isPublisher
+    ? { icon: '💬', title: '接受咨询', desc: '查看买家消息，及时回复', path: '/messages' }
+    : { icon: '💬', title: '咨询发布方', desc: '直接沟通，快速匹配', path: '/pets' },
+])
 
 onMounted(async () => {
   try {

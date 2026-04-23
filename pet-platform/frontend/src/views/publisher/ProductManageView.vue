@@ -55,7 +55,16 @@
     <el-dialog v-model="dialogVisible" :title="editId ? '编辑商品' : '发布商品'" width="560px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="名称"><el-input v-model="form.product_name" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="请选择商品分类" style="width: 100%;">
+            <el-option
+              v-for="item in categoryOptions"
+              :key="item"
+              :label="item"
+              :value="item"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="价格"><el-input-number v-model="form.price" :min="0" :precision="2" /></el-form-item>
         <el-form-item label="库存"><el-input-number v-model="form.stock" :min="0" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" rows="3" /></el-form-item>
@@ -67,11 +76,11 @@
               :auto-upload="false"
               :before-upload="beforeImageUpload"
               :on-change="handleProductImageChange"
-              accept=".png,.jpg,.jpeg,.svg"
+              accept=".png,.jpg,.jpeg,.svg,.webp,.gif"
             >
               <el-button class="action-btn" type="primary" plain>选择图片</el-button>
             </el-upload>
-            <div class="upload-tip">仅支持 PNG / JPG / SVG</div>
+            <div class="upload-tip">支持 PNG / JPG / JPEG / SVG / WEBP / GIF</div>
             <img v-if="imagePreview" :src="imagePreview" class="preview-img" />
           </div>
         </el-form-item>
@@ -97,7 +106,16 @@ const loading = ref(false)
 const saving = ref(false)
 const dialogVisible = ref(false)
 const editId = ref(null)
-
+const categoryOptions = [
+  '日常用品', 
+  '猫粮',
+  '狗粮',
+  '玩具', 
+  '零食', 
+  '清洁用品', 
+  '出行', 
+  '其他'
+]
 const imageFile = ref(null)
 const imagePreview = ref('')
 
@@ -122,18 +140,18 @@ function resetForm() {
 }
 
 function beforeImageUpload(file) {
-  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const allowed = ['image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
   const ok = allowed.includes(file.type)
-  if (!ok) ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+  if (!ok) ElMessage.error('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式')
   return false
 }
 
 function handleProductImageChange(file) {
   const raw = file.raw
   if (!raw) return
-  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const allowed = ['image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
   if (!allowed.includes(raw.type)) {
-    ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+    ElMessage.error('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式')
     return
   }
   imageFile.value = raw

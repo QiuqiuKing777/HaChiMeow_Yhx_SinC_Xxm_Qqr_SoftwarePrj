@@ -380,7 +380,7 @@ INSERT INTO pet_images (pet_id, image_url, sort_order) VALUES
 -- 示例商品数据 (publisher_id=3 宠爱宠物店)
 -- ----------------------------------------------------------------
 INSERT INTO products (publisher_id, product_name, category, description, cover_image, price, stock, status) VALUES
-(3, '皇家猫粮成猫配方 2kg', '猫粮',
+(3, '皇家猫粮成猫配方 2kg', '宠物粮食',
  '皇家官方正品，均衡营养配方，适合1岁以上成猫，增强免疫力', '/NKU.png', 89.00, 200, 'online'),
 
 (3, '猫咪互动逗猫棒套装', '玩具',

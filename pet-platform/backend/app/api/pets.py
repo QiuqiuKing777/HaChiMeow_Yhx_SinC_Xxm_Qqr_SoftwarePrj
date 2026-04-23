@@ -11,7 +11,18 @@ from app.utils import role_required, paginate_query
 
 pets_bp = Blueprint('pets', __name__, url_prefix='/api/pets')
 
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'svg'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'svg', 'webp', 'gif'}
+ALLOWED_IMAGE_MIMETYPES = {
+    'image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif'
+}
+MIMETYPE_TO_EXT = {
+    'image/png': 'png',
+    'image/x-png': 'png',
+    'image/jpeg': 'jpg',
+    'image/svg+xml': 'svg',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+}
 
 
 def allowed_image_file(filename: str) -> bool:
@@ -65,10 +76,16 @@ def save_uploaded_pet_image(file_storage):
     if not filename:
         return None
 
-    if not allowed_image_file(filename):
-        raise ValueError('仅支持 PNG、JPG、JPEG、SVG 格式图片')
-
-    ext = filename.rsplit('.', 1)[1].lower()
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    mimetype = (file_storage.mimetype or '').lower()
+    ext_ok = ext in ALLOWED_IMAGE_EXTENSIONS
+    mime_ok = mimetype in ALLOWED_IMAGE_MIMETYPES
+    if not (ext_ok or mime_ok):
+        raise ValueError('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式图片')
+    if not ext_ok:
+        ext = MIMETYPE_TO_EXT.get(mimetype, '')
+    if not ext:
+        raise ValueError('无法识别图片格式，请更换图片后重试')
     new_filename = f"{uuid.uuid4().hex}.{ext}"
 
     upload_dir = Path(current_app.static_folder) / 'uploads' / 'pets'

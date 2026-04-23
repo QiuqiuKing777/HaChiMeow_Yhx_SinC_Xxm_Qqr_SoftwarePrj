@@ -66,6 +66,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="健康状况"><el-input v-model="form.health_status" /></el-form-item>
+        <el-form-item label="所在地区"><el-input v-model="form.location" placeholder="如：天津市 南开区" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" rows="3" /></el-form-item>
 
         <el-form-item label="上传图片">
@@ -75,11 +76,11 @@
               :auto-upload="false"
               :before-upload="beforeImageUpload"
               :on-change="handlePetImageChange"
-              accept=".png,.jpg,.jpeg,.svg"
+              accept=".png,.jpg,.jpeg,.svg,.webp,.gif"
             >
               <el-button class="action-btn" type="primary" plain>选择图片</el-button>
             </el-upload>
-            <div class="upload-tip">仅支持 PNG / JPG / SVG</div>
+            <div class="upload-tip">支持 PNG / JPG / JPEG / SVG / WEBP / GIF</div>
             <img v-if="imagePreview" :src="imagePreview" class="preview-img" />
           </div>
         </el-form-item>
@@ -116,6 +117,7 @@ const form = reactive({
   age_desc: '',
   gender: 'male',
   health_status: '',
+  location: '',
   description: '',
 })
 
@@ -127,6 +129,7 @@ function resetForm() {
     age_desc: '',
     gender: 'male',
     health_status: '',
+    location: '',
     description: '',
   })
   imageFile.value = null
@@ -142,18 +145,18 @@ function resetForm() {
 
 
 function beforeImageUpload(file) {
-  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const allowed = ['image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
   const ok = allowed.includes(file.type)
-  if (!ok) ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+  if (!ok) ElMessage.error('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式')
   return ok ? false : false
 }
 
 function handlePetImageChange(file) {
   const raw = file.raw
   if (!raw) return
-  const allowed = ['image/png', 'image/jpeg', 'image/svg+xml']
+  const allowed = ['image/png', 'image/x-png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
   if (!allowed.includes(raw.type)) {
-    ElMessage.error('仅支持 PNG、JPG、SVG 格式')
+    ElMessage.error('仅支持 PNG、JPG、JPEG、SVG、WEBP、GIF 格式')
     return
   }
   imageFile.value = raw
@@ -183,6 +186,7 @@ function openDialog(pet = null) {
       age_desc: pet.age_desc || '',
       gender: pet.gender || 'male',
       health_status: pet.health_status || '',
+      location: pet.location || '',
       description: pet.description || '',
     })
     imagePreview.value = pet.cover_image || '/NKU.png'
@@ -202,6 +206,7 @@ async function savePet() {
     fd.append('age_desc', form.age_desc)
     fd.append('gender', form.gender)
     fd.append('health_status', form.health_status)
+    fd.append('location', form.location)
     fd.append('description', form.description)
     if (imageFile.value) fd.append('image', imageFile.value)
 
