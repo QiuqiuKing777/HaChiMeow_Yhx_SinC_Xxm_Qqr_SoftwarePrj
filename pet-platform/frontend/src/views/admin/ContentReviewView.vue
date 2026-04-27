@@ -25,10 +25,28 @@
           <el-table :data="pets.list" v-loading="pets.loading" stripe class="admin-table" style="width:100%">
             <el-table-column prop="pet_id" label="ID" width="70" />
             <el-table-column label="头像" width="70">
-              <template #default="{ row }">
-                <el-avatar :size="40" :src="row.cover_image" shape="square" style="background:#e6a23c">宠</el-avatar>
-              </template>
-            </el-table-column>
+  <template #default="{ row }">
+    <el-avatar
+      :size="40"
+      :src="
+        row.cover_image
+          ? (
+              row.cover_image.startsWith('http://') || row.cover_image.startsWith('https://')
+                ? row.cover_image
+                : row.cover_image.startsWith('/')
+                  ? row.cover_image
+                  : `/${row.cover_image}`
+            )
+          : '/NKU.png'
+      "
+      shape="square"
+      style="background:#e6a23c"
+    >
+      宠
+    </el-avatar>
+  </template>
+</el-table-column>
+
             <el-table-column prop="pet_name" label="名称" min-width="150" />
             <el-table-column prop="species" label="种类" width="80" />
             <el-table-column prop="age_desc" label="年龄" width="80" />
@@ -45,7 +63,8 @@
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="180">
               <template #default="{ row }">
-                <el-button v-if="row.status !== 'online'" type="success" size="small" @click="setPetStatus(row, 'online')">上线</el-button>
+<!--                如果已领养，不可操作-->
+                <el-button v-if="row.status !== 'online' && row.status !== 'adopted'" type="success" size="small" @click="setPetStatus(row, 'online')">上线</el-button>
                 <el-button v-if="row.status === 'online'" type="danger" size="small" @click="setPetStatus(row, 'offline')">下线</el-button>
               </template>
             </el-table-column>

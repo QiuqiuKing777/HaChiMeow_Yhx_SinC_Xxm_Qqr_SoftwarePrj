@@ -7,6 +7,30 @@ from app.utils import role_required, paginate_query
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
+def build_full_image_url(path):
+    if not path:
+        return None
+
+    base = request.host_url.rstrip('/')
+
+    if path.startswith('http://') or path.startswith('https://'):
+        return path
+
+    if path.startswith('/static/'):
+        return f'{base}{path}'
+    else:
+        return f'{path}'
+
+def serialize_admin_pet(pet):
+    data = pet.to_dict()
+
+    data['cover_image'] = build_full_image_url(data.get('cover_image'))
+
+    images = data.get('images') or []
+    for img in images:
+        img['image_url'] = build_full_image_url(img.get('image_url'))
+
+    return data
 
 # ---- 用户管理 ----
 
@@ -75,7 +99,8 @@ def admin_list_pets():
         query = query.filter(Pet.status != 'offline')
     query = query.order_by(Pet.created_at.desc())
     result = paginate_query(query, page, per_page)
-    result['items'] = [p.to_dict() for p in result['items']]
+    # result['items'] = [p.to_dict() for p in result['items']]
+    result['items'] = [serialize_admin_pet(p) for p in result['items']]
     return jsonify(result), 200
 
 
