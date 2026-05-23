@@ -6,9 +6,20 @@
         <h2 class="page-banner-title">统计报表</h2>
         <p class="page-banner-sub">平台核心业务数据汇总与状态分布分析</p>
       </div>
-      <el-button @click="loadAll" :loading="statsLoading" class="refresh-btn">
-        刷新数据
-      </el-button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="YYYY-MM-DD"
+          style="width:260px"
+          @change="loadStats"
+        />
+        <el-button @click="dateRange=null;loadStats()" class="refresh-btn">清除</el-button>
+        <el-button @click="loadAll" :loading="statsLoading" class="refresh-btn">刷新数据</el-button>
+      </div>
     </div>
 
     <!-- 核心指标卡片 -->
@@ -175,6 +186,7 @@ import { adminApi } from '@/api'
 
 const statsLoading = ref(false)
 const stats = ref({})
+const dateRange = ref(null)
 
 const metrics = computed(() => [
   { label: '用户总数',    value: stats.value.users?.total    ?? '-', color: '#409eff', icon: User },
@@ -240,7 +252,14 @@ const productStats = computed(() => {
 
 async function loadStats() {
   statsLoading.value = true
-  try { stats.value = await adminApi.stats() } finally { statsLoading.value = false }
+  try {
+    const params = {}
+    if (dateRange.value && dateRange.value[0]) {
+      params.start_date = dateRange.value[0]
+      params.end_date   = dateRange.value[1]
+    }
+    stats.value = await adminApi.stats(params)
+  } finally { statsLoading.value = false }
 }
 
 /* ---- logs ---- */

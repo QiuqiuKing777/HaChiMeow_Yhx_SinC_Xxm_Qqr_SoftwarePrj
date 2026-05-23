@@ -112,6 +112,7 @@ def list_pets():
     gender = request.args.get('gender', '')
     location = request.args.get('location', '')
     keyword = request.args.get('keyword', '')
+    health_status = request.args.get('health_status', '')
 
     query = Pet.query.filter_by(status='online')
     if species:
@@ -122,6 +123,8 @@ def list_pets():
         query = query.filter(Pet.gender == gender)
     if location:
         query = query.filter(Pet.location.ilike(f'%{location}%'))
+    if health_status:
+        query = query.filter(Pet.health_status.ilike(f'%{health_status}%'))
     if keyword:
         query = query.filter(
             Pet.pet_name.ilike(f'%{keyword}%') | Pet.description.ilike(f'%{keyword}%')
@@ -194,7 +197,7 @@ def create_pet():
         location=data.get('location'),
         description=data.get('description'),
         cover_image=cover_image,
-        status='online',
+        status='pending',
     )
     db.session.add(pet)
     db.session.flush()

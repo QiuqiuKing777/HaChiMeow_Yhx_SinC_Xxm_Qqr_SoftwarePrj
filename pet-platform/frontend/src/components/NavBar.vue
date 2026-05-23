@@ -8,6 +8,7 @@
           <el-menu-item index="/pets">领养宠物</el-menu-item>
           <el-menu-item index="/products">宠物用品</el-menu-item>
           <el-menu-item index="/services">宠物服务</el-menu-item>
+          <el-menu-item index="/ai-chat">AI助手🐾</el-menu-item>
           <el-menu-item v-if="userStore.isAdmin" index="/admin">老大后台🐱</el-menu-item>
           <el-menu-item v-if="userStore.isPublisher" index="/publisher">老板后台🐱</el-menu-item>
         </el-menu>

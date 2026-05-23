@@ -1,8 +1,9 @@
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 
 from app.extensions import db
-from app.models import User, Pet, Product, Service, Order, Booking, AdoptionApplication, OperationLog, Review
+from app.models import User, Pet, Product, Service, Order, Booking, AdoptionApplication, OperationLog, Review, Complaint
 from app.utils import role_required, paginate_query
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
@@ -78,6 +79,7 @@ def set_user_status(user_id):
         target_type='user',
         target_id=user_id,
         detail=f'status={status}',
+        ip_address=request.remote_addr,
     ))
     db.session.commit()
     return jsonify({'message': f'用户状态已设置为 {status}', 'user': user.to_dict()}), 200
@@ -117,7 +119,8 @@ def set_pet_status(pet_id):
     pet.status = status
     db.session.add(OperationLog(
         operator_id=operator_id, action='set_pet_status',
-        target_type='pet', target_id=pet_id, detail=f'status={status}'
+        target_type='pet', target_id=pet_id, detail=f'status={status}',
+        ip_address=request.remote_addr,
     ))
     db.session.commit()
     return jsonify({'message': '宠物状态已更新', 'pet': pet.to_dict()}), 200
@@ -161,7 +164,8 @@ def set_product_status(product_id):
     product.status = status
     db.session.add(OperationLog(
         operator_id=operator_id, action='set_product_status',
-        target_type='product', target_id=product_id, detail=f'status={status}'
+        target_type='product', target_id=product_id, detail=f'status={status}',
+        ip_address=request.remote_addr,
     ))
     db.session.commit()
     return jsonify({'message': '商品状态已更新'}), 200
@@ -200,10 +204,119 @@ def set_service_status(service_id):
     service.status = status
     db.session.add(OperationLog(
         operator_id=operator_id, action='set_service_status',
-        target_type='service', target_id=service_id, detail=f'status={status}'
+        target_type='service', target_id=service_id, detail=f'status={status}',
+        ip_address=request.remote_addr,
     ))
     db.session.commit()
     return jsonify({'message': '服务状态已更新'}), 200
+
+
+# ---- 订单监管 ----
+
+@admin_bp.route('/orders', methods=['GET'])
+@role_required('admin')
+def admin_list_orders():
+    page       = request.args.get('page', 1, type=int)
+    per_page   = request.args.get('per_page', 20, type=int)
+    pay_status = request.args.get('pay_status', '')
+    keyword    = request.args.get('keyword', '')
+
+    query = Order.query
+    if pay_status:
+        query = query.filter(Order.pay_status == pay_status)
+    if keyword:
+        query = query.join(User, Order.buyer_id == User.user_id).filter(
+            User.username.ilike(f'%{keyword}%') | User.nickname.ilike(f'%{keyword}%')
+        )
+    query = query.order_by(Order.created_at.desc())
+    result = paginate_query(query, page, per_page)
+    items = []
+    for o in result['items']:
+        d = o.to_dict()
+        d['buyer'] = o.buyer.to_public_dict() if o.buyer else None
+        items.append(d)
+    result['items'] = items
+    return jsonify(result), 200
+
+
+# ---- 预约监管 ----
+
+@admin_bp.route('/bookings', methods=['GET'])
+@role_required('admin')
+def admin_list_bookings():
+    page   = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    status = request.args.get('status', '')
+
+    query = Booking.query
+    if status:
+        query = query.filter(Booking.booking_status == status)
+    query = query.order_by(Booking.created_at.desc())
+    result = paginate_query(query, page, per_page)
+    result['items'] = [b.to_dict() for b in result['items']]
+    return jsonify(result), 200
+
+
+# ---- 领养申请监管 ----
+
+@admin_bp.route('/adoptions', methods=['GET'])
+@role_required('admin')
+def admin_list_adoptions():
+    page     = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    status   = request.args.get('status', '')
+
+    query = AdoptionApplication.query
+    if status:
+        query = query.filter(AdoptionApplication.review_status == status)
+    query = query.order_by(AdoptionApplication.submitted_at.desc())
+    result = paginate_query(query, page, per_page)
+    result['items'] = [a.to_dict() for a in result['items']]
+    return jsonify(result), 200
+
+
+# ---- 投诉管理 ----
+
+@admin_bp.route('/complaints', methods=['GET'])
+@role_required('admin')
+def admin_list_complaints():
+    page     = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    status   = request.args.get('status', '')
+
+    query = Complaint.query
+    if status:
+        query = query.filter(Complaint.status == status)
+    query = query.order_by(Complaint.created_at.desc())
+    result = paginate_query(query, page, per_page)
+    result['items'] = [c.to_dict() for c in result['items']]
+    return jsonify(result), 200
+
+
+@admin_bp.route('/complaints/<int:complaint_id>/handle', methods=['PUT'])
+@role_required('admin')
+def handle_complaint(complaint_id):
+    operator_id = get_jwt_identity()
+    data        = request.get_json() or {}
+    status      = data.get('status')
+    admin_reply = data.get('admin_reply', '')
+
+    if status not in ('handling', 'resolved', 'closed'):
+        return jsonify({'error': 'status 可选值: handling/resolved/closed'}), 400
+
+    complaint = Complaint.query.get_or_404(complaint_id)
+    complaint.status       = status
+    complaint.admin_reply  = admin_reply
+    complaint.handled_by   = operator_id
+    complaint.handled_at   = datetime.utcnow()
+    db.session.add(OperationLog(
+        operator_id=operator_id, action='handle_complaint',
+        target_type='complaint', target_id=complaint_id,
+        detail=f'status={status}',
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
+    return jsonify({'message': '投诉已处理', 'complaint': complaint.to_dict()}), 200
 
 
 # ---- 统计数据 ----
@@ -212,7 +325,38 @@ def set_service_status(service_id):
 @role_required('admin')
 def get_stats():
     from sqlalchemy import func
+    from datetime import date as date_type
+
+    start_date_str = request.args.get('start_date', '')
+    end_date_str   = request.args.get('end_date', '')
+
+    # 解析日期范围
+    start_dt = None
+    end_dt   = None
+    try:
+        if start_date_str:
+            start_dt = datetime.strptime(start_date_str, '%Y-%m-%d')
+        if end_date_str:
+            # end_date 取当天结束（次日零点前）
+            end_dt = datetime.strptime(end_date_str, '%Y-%m-%d').replace(
+                hour=23, minute=59, second=59
+            )
+    except ValueError:
+        return jsonify({'error': '日期格式错误，请使用 YYYY-MM-DD'}), 400
+
+    def date_filter(q, col):
+        if start_dt:
+            q = q.filter(col >= start_dt)
+        if end_dt:
+            q = q.filter(col <= end_dt)
+        return q
+
+    # 基础统计（不受日期过滤影响，始终反映全量数据）
     stats = {
+        'date_range': {
+            'start_date': start_date_str or None,
+            'end_date':   end_date_str or None,
+        },
         'users': {
             'total':     User.query.count(),
             'user':      User.query.filter_by(role_type='user').count(),
@@ -239,31 +383,71 @@ def get_stats():
             'pending': Service.query.filter_by(status='pending').count(),
         },
         'orders': {
-            'total':     Order.query.count(),
-            'pending':   Order.query.filter_by(pay_status='pending').count(),
-            'paid':      Order.query.filter_by(pay_status='paid').count(),
-            'refunded':  Order.query.filter_by(pay_status='refunded').count(),
-            'cancelled': Order.query.filter_by(pay_status='cancelled').count(),
+            'total':     date_filter(Order.query, Order.created_at).count(),
+            'pending':   date_filter(Order.query.filter_by(pay_status='pending'), Order.created_at).count(),
+            'paid':      date_filter(Order.query.filter_by(pay_status='paid'), Order.created_at).count(),
+            'refunded':  date_filter(Order.query.filter_by(pay_status='refunded'), Order.created_at).count(),
+            'cancelled': date_filter(Order.query.filter_by(pay_status='cancelled'), Order.created_at).count(),
             'total_amount': float(
-                db.session.query(func.sum(Order.total_amount))
-                .filter(Order.pay_status == 'paid')
-                .scalar() or 0
+                date_filter(
+                    db.session.query(func.sum(Order.total_amount)).filter(Order.pay_status == 'paid'),
+                    Order.created_at
+                ).scalar() or 0
             ),
         },
         'adoptions': {
-            'total':    AdoptionApplication.query.count(),
-            'pending':  AdoptionApplication.query.filter_by(review_status='pending').count(),
-            'approved': AdoptionApplication.query.filter_by(review_status='approved').count(),
-            'rejected': AdoptionApplication.query.filter_by(review_status='rejected').count(),
+            'total':    date_filter(AdoptionApplication.query, AdoptionApplication.submitted_at).count(),
+            'pending':  date_filter(AdoptionApplication.query.filter_by(review_status='pending'), AdoptionApplication.submitted_at).count(),
+            'approved': date_filter(AdoptionApplication.query.filter_by(review_status='approved'), AdoptionApplication.submitted_at).count(),
+            'rejected': date_filter(AdoptionApplication.query.filter_by(review_status='rejected'), AdoptionApplication.submitted_at).count(),
         },
         'bookings': {
-            'total':     Booking.query.count(),
-            'pending':   Booking.query.filter_by(booking_status='pending').count(),
-            'confirmed': Booking.query.filter_by(booking_status='confirmed').count(),
-            'finished':  Booking.query.filter_by(booking_status='finished').count(),
-            'cancelled': Booking.query.filter_by(booking_status='cancelled').count(),
+            'total':     date_filter(Booking.query, Booking.created_at).count(),
+            'pending':   date_filter(Booking.query.filter_by(booking_status='pending'), Booking.created_at).count(),
+            'confirmed': date_filter(Booking.query.filter_by(booking_status='confirmed'), Booking.created_at).count(),
+            'finished':  date_filter(Booking.query.filter_by(booking_status='finished'), Booking.created_at).count(),
+            'cancelled': date_filter(Booking.query.filter_by(booking_status='cancelled'), Booking.created_at).count(),
         },
     }
+
+    # 近 30 天每日新增趋势（订单量 + 领养申请量），用于前端折线图
+    from sqlalchemy import cast, Date as SADate, text
+    import calendar
+
+    trend_days = 30
+    if start_dt and end_dt:
+        delta = (end_dt - start_dt).days + 1
+        trend_days = min(delta, 90)
+
+    daily_orders = db.session.query(
+        cast(Order.created_at, SADate).label('day'),
+        func.count(Order.order_id).label('cnt'),
+    ).filter(
+        Order.created_at >= db.session.query(func.date_sub(func.now(), text(f'interval {trend_days} day'))).scalar_subquery()
+        if not start_dt else Order.created_at >= start_dt
+    )
+    if end_dt:
+        daily_orders = daily_orders.filter(Order.created_at <= end_dt)
+    daily_orders = daily_orders.group_by('day').order_by('day').all()
+
+    daily_adoptions = db.session.query(
+        cast(AdoptionApplication.submitted_at, SADate).label('day'),
+        func.count(AdoptionApplication.application_id).label('cnt'),
+    ).filter(
+        AdoptionApplication.submitted_at >= db.session.query(
+            func.date_sub(func.now(), text(f'interval {trend_days} day'))
+        ).scalar_subquery()
+        if not start_dt else AdoptionApplication.submitted_at >= start_dt
+    )
+    if end_dt:
+        daily_adoptions = daily_adoptions.filter(AdoptionApplication.submitted_at <= end_dt)
+    daily_adoptions = daily_adoptions.group_by('day').order_by('day').all()
+
+    stats['trend'] = {
+        'orders':    [{'date': str(r.day), 'count': r.cnt} for r in daily_orders],
+        'adoptions': [{'date': str(r.day), 'count': r.cnt} for r in daily_adoptions],
+    }
+
     return jsonify(stats), 200
 
 
@@ -284,6 +468,7 @@ def list_logs():
         'target_type': log.target_type,
         'target_id':   log.target_id,
         'detail':      log.detail,
+        'ip_address':  log.ip_address,
         'created_at':  log.created_at.isoformat() if log.created_at else None,
     } for log in result['items']]
     return jsonify(result), 200

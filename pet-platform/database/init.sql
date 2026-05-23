@@ -290,9 +290,28 @@ CREATE TABLE IF NOT EXISTS operation_logs (
     target_type VARCHAR(50)           COMMENT '对象类型',
     target_id   BIGINT                COMMENT '对象ID',
     detail      TEXT                  COMMENT '操作明细(JSON)',
+    ip_address  VARCHAR(50)           COMMENT '操作IP',
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (operator_id) REFERENCES users(user_id)
 ) COMMENT='操作日志表';
+
+-- ----------------------------------------------------------------
+-- 19. 投诉表
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS complaints (
+    complaint_id BIGINT      PRIMARY KEY AUTO_INCREMENT,
+    user_id      BIGINT      NOT NULL              COMMENT '投诉人用户ID',
+    target_type  VARCHAR(50) NOT NULL              COMMENT '投诉对象类型(order/booking/pet/product/service/user)',
+    target_id    BIGINT      NOT NULL              COMMENT '投诉对象ID',
+    content      TEXT        NOT NULL              COMMENT '投诉内容',
+    status       ENUM('pending','handling','resolved','closed') NOT NULL DEFAULT 'pending' COMMENT '处理状态',
+    admin_reply  TEXT                              COMMENT '管理员回复',
+    handled_by   BIGINT                            COMMENT '处理管理员ID',
+    created_at   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    handled_at   DATETIME                          COMMENT '处理时间',
+    FOREIGN KEY (user_id)    REFERENCES users(user_id),
+    FOREIGN KEY (handled_by) REFERENCES users(user_id)
+) COMMENT='投诉表';
 
 -- ================================================================
 -- 索引

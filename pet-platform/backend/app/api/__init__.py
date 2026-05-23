@@ -11,6 +11,8 @@ from .bookings import bookings_bp
 from .user import user_bp
 from .admin import admin_bp
 from .reviews import reviews_bp
+from .complaints import complaints_bp
+from .ai_chat import ai_chat_bp
 
 
 def register_blueprints(app):
@@ -25,3 +27,5 @@ def register_blueprints(app):
     app.register_blueprint(user_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(reviews_bp)
+    app.register_blueprint(complaints_bp)
+    app.register_blueprint(ai_chat_bp)

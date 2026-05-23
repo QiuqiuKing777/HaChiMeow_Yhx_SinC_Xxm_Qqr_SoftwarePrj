@@ -549,6 +549,43 @@ class OperationLog(db.Model):
     target_type = db.Column(db.String(50))
     target_id   = db.Column(db.BigInteger)
     detail      = db.Column(db.Text)
+    ip_address  = db.Column(db.String(50))
     created_at  = db.Column(db.DateTime, default=datetime.utcnow)
 
     operator = db.relationship('User')
+
+
+# ----------------------------------------------------------------
+# 投诉表
+# ----------------------------------------------------------------
+class Complaint(db.Model):
+    __tablename__ = 'complaints'
+
+    complaint_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    user_id      = db.Column(db.BigInteger, db.ForeignKey('users.user_id'), nullable=False)
+    target_type  = db.Column(db.String(50), nullable=False)   # order/booking/pet/product/service/user
+    target_id    = db.Column(db.BigInteger, nullable=False)
+    content      = db.Column(db.Text, nullable=False)
+    status       = db.Column(db.Enum('pending', 'handling', 'resolved', 'closed'), default='pending')
+    admin_reply  = db.Column(db.Text)
+    handled_by   = db.Column(db.BigInteger, db.ForeignKey('users.user_id'))
+    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
+    handled_at   = db.Column(db.DateTime)
+
+    user    = db.relationship('User', foreign_keys=[user_id])
+    handler = db.relationship('User', foreign_keys=[handled_by])
+
+    def to_dict(self):
+        return {
+            'complaint_id': self.complaint_id,
+            'user_id':      self.user_id,
+            'user':         self.user.to_public_dict() if self.user else None,
+            'target_type':  self.target_type,
+            'target_id':    self.target_id,
+            'content':      self.content,
+            'status':       self.status,
+            'admin_reply':  self.admin_reply,
+            'handled_by':   self.handled_by,
+            'created_at':   self.created_at.isoformat() if self.created_at else None,
+            'handled_at':   self.handled_at.isoformat() if self.handled_at else None,
+        }

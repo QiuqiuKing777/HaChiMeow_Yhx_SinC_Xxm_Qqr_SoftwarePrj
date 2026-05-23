@@ -107,8 +107,15 @@ const routes = [
         name: 'AdminStats',
         component: () => import('@/views/admin/StatsView.vue'),
       },
+      {
+        path: 'monitor',
+        name: 'AdminMonitor',
+        component: () => import('@/views/admin/AdminMonitorView.vue'),
+      },
     ],
   },
+
+  { path: '/ai-chat', name: 'AiChat', component: () => import('@/views/AiChatView.vue') },
 
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

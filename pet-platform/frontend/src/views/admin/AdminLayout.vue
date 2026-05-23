@@ -32,6 +32,10 @@
           <el-icon><TrendCharts /></el-icon>
           <template #title>统计报表</template>
         </el-menu-item>
+        <el-menu-item index="/admin/monitor">
+          <el-icon><List /></el-icon>
+          <template #title>业务监管</template>
+        </el-menu-item>
       </el-menu>
 
       <!-- 底部操作 -->
@@ -100,7 +104,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  DataAnalysis, User, DocumentChecked, TrendCharts,
+  DataAnalysis, User, DocumentChecked, TrendCharts, List,
   House, SwitchButton, Expand, Fold, Refresh, ArrowDown
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -118,6 +122,7 @@ const routeLabels = {
   '/admin/users':     '用户管理',
   '/admin/review':    '内容审核',
   '/admin/stats':     '统计报表',
+  '/admin/monitor':   '业务监管',
 }
 const breadcrumbLabel = computed(() => routeLabels[route.path] ?? null)
 

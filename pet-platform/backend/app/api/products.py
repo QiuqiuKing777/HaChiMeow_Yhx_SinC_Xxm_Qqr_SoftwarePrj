@@ -188,7 +188,7 @@ def create_product():
         cover_image=cover_image,
         price=price,
         stock=stock,
-        status='online',
+        status='pending',
     )
     db.session.add(product)
     db.session.flush()

@@ -24,17 +24,20 @@ def role_required(*roles):
 
 
 def log_action(action, target_type=None, target_id=None, detail=None):
-    """记录操作日志"""
+    """记录操作日志（含 IP 地址）"""
     from app.models import OperationLog
     from app.extensions import db
+    from flask import request as flask_request
     try:
-        user_id = get_jwt_identity()
+        user_id    = get_jwt_identity()
+        ip_address = flask_request.remote_addr
         log = OperationLog(
             operator_id=user_id,
             action=action,
             target_type=target_type,
             target_id=target_id,
             detail=detail,
+            ip_address=ip_address,
         )
         db.session.add(log)
         db.session.commit()

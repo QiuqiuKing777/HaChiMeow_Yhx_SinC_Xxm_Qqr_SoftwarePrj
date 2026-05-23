@@ -154,6 +154,12 @@ export const reviewsApi = {
   list:   params => http.get('/reviews', { params }),
 }
 
+// ---- Complaints ----
+export const complaintsApi = {
+  submit: data   => http.post('/complaints', data),
+  mine:   params => http.get('/complaints/mine', { params }),
+}
+
 // ---- Admin ----
 export const adminApi = {
   users:         params => http.get('/admin/users', { params }),
@@ -164,8 +170,18 @@ export const adminApi = {
   setProductStatus: (id, data) => http.put(`/admin/products/${id}/status`, data),
   services:      params => http.get('/admin/services', { params }),
   setServiceStatus: (id, data) => http.put(`/admin/services/${id}/status`, data),
-  stats:         ()     => http.get('/admin/stats'),
+  stats:         params => http.get('/admin/stats', { params }),
   logs:          params => http.get('/admin/logs', { params }),
+  orders:        params => http.get('/admin/orders', { params }),
+  bookings:      params => http.get('/admin/bookings', { params }),
+  adoptions:     params => http.get('/admin/adoptions', { params }),
+  complaints:    params => http.get('/admin/complaints', { params }),
+  handleComplaint: (id, data) => http.put(`/admin/complaints/${id}/handle`, data),
+}
+
+// ---- AI Chat ----
+export const aiApi = {
+  chat: data => http.post('/ai/chat', data),
 }
 
 export default http

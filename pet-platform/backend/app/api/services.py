@@ -179,7 +179,7 @@ def create_service():
         cover_image=cover_image,
         duration=data.get('duration'),
         location=data.get('location'),
-        status='online',
+        status='pending',
     )
     db.session.add(service)
     db.session.flush()
