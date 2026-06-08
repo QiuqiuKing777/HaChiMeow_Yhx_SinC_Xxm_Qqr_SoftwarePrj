@@ -296,22 +296,54 @@ CREATE TABLE IF NOT EXISTS operation_logs (
 ) COMMENT='操作日志表';
 
 -- ----------------------------------------------------------------
--- 19. 投诉表
+-- 19. 投诉/评分表
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS complaints (
-    complaint_id BIGINT      PRIMARY KEY AUTO_INCREMENT,
-    user_id      BIGINT      NOT NULL              COMMENT '投诉人用户ID',
-    target_type  VARCHAR(50) NOT NULL              COMMENT '投诉对象类型(order/booking/pet/product/service/user)',
-    target_id    BIGINT      NOT NULL              COMMENT '投诉对象ID',
-    content      TEXT        NOT NULL              COMMENT '投诉内容',
-    status       ENUM('pending','handling','resolved','closed') NOT NULL DEFAULT 'pending' COMMENT '处理状态',
-    admin_reply  TEXT                              COMMENT '管理员回复',
-    handled_by   BIGINT                            COMMENT '处理管理员ID',
-    created_at   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    handled_at   DATETIME                          COMMENT '处理时间',
-    FOREIGN KEY (user_id)    REFERENCES users(user_id),
-    FOREIGN KEY (handled_by) REFERENCES users(user_id)
-) COMMENT='投诉表';
+    complaint_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    user_id      BIGINT NOT NULL COMMENT '投诉/评分用户ID',
+
+    target_type  ENUM('services','pets','products') NOT NULL
+        COMMENT '对象类型：services服务 / pets宠物 / products商品',
+
+    target_id    BIGINT NOT NULL
+        COMMENT '对象ID：对应 services.service_id / pets.pet_id / products.product_id',
+
+    score        TINYINT NOT NULL DEFAULT 5
+        COMMENT '评分，1~5星',
+
+    content      TEXT NOT NULL
+        COMMENT '投诉/评价内容',
+
+    status       ENUM('pending','handling','resolved','closed')
+        NOT NULL DEFAULT 'pending'
+        COMMENT '处理状态',
+
+    admin_reply  TEXT
+        COMMENT '管理员回复',
+
+    handled_by   BIGINT
+        COMMENT '处理人管理员ID',
+
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    handled_at   DATETIME
+        COMMENT '处理时间',
+
+    CONSTRAINT chk_complaints_score CHECK (score BETWEEN 1 AND 5),
+
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (handled_by) REFERENCES users(user_id) ON DELETE SET NULL,
+
+    INDEX idx_complaints_user (user_id),
+    INDEX idx_complaints_handler (handled_by),
+    INDEX idx_complaints_target (target_type, target_id),
+    INDEX idx_complaints_status (status),
+    INDEX idx_complaints_created_at (created_at)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='投诉/评分表';
 
 -- ================================================================
 -- 索引
