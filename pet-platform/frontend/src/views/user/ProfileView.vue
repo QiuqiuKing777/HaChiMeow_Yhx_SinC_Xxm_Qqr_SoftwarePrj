@@ -9,12 +9,12 @@
             <el-tag size="small">{{ roleLabel }}</el-tag>
           </div>
           <el-menu :router="true" :default-active="$route.path" style="border:none;margin-top:12px">
-            <el-menu-item index="/profile">个人资料</el-menu-item>
-            <el-menu-item index="/favorites">我的收藏</el-menu-item>
+            <el-menu-item index="/user/profile">个人资料</el-menu-item>
+            <el-menu-item index="/user/favorites">我的收藏</el-menu-item>
             <el-menu-item index="/orders">我的订单</el-menu-item>
-            <el-menu-item index="/applications">我的领养申请</el-menu-item>
+            <el-menu-item index="/user/applications">我的领养申请</el-menu-item>
             <el-menu-item index="/bookings">我的预约</el-menu-item>
-            <el-menu-item index="/notifications">消息通知</el-menu-item>
+            <el-menu-item index="/user/notifications">消息通知</el-menu-item>
           </el-menu>
         </el-card>
       </el-col>

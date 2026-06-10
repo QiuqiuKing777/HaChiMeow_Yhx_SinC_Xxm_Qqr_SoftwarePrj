@@ -1,85 +1,172 @@
 <template>
   <NavBar>
     <h2>我的领养申请</h2>
+
     <div v-loading="loading">
       <el-empty v-if="!loading && applications.length === 0" description="暂无领养申请" />
+
       <el-table :data="applications" border>
         <el-table-column label="宠物" width="120">
           <template #default="{ row }">{{ row.pet?.pet_name }}</template>
         </el-table-column>
+
         <el-table-column label="种类" width="100">
           <template #default="{ row }">{{ row.pet?.species }}</template>
         </el-table-column>
+
         <el-table-column label="居住情况" show-overflow-tooltip>
           <template #default="{ row }">{{ row.housing_info }}</template>
         </el-table-column>
+
         <el-table-column label="申请时间" prop="submitted_at" width="160" />
+
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="statusType(row.review_status)">{{ statusLabel(row.review_status) }}</el-tag>
+            <el-tag :type="statusType(row.review_status)">
+              {{ statusLabel(row.review_status) }}
+            </el-tag>
           </template>
         </el-table-column>
+
         <el-table-column label="审核意见" prop="review_remark" width="160" show-overflow-tooltip />
-        <el-table-column label="操作" width="100">
+
+        <el-table-column label="操作" width="190">
           <template #default="{ row }">
-            <el-popconfirm
-              v-if="row.review_status === 'pending' || row.review_status === 'supplement'"
-              title="确定撤销申请？"
-              @confirm="cancel(row)"
-            >
-              <template #reference><el-button size="small" type="danger">撤销</el-button></template>
-            </el-popconfirm>
-            <el-popconfirm
-              v-else-if="row.review_status === 'approved'"
-              title="确定取消领养？取消后宠物将重新上架，下次申请将自动通过。"
-              @confirm="cancel(row)"
-            >
-              <template #reference><el-button size="small" type="warning">取消领养</el-button></template>
-            </el-popconfirm>
+            <div class="actions">
+              <el-button
+                size="small"
+                type="primary"
+                plain
+                @click="goComplaint(row)"
+              >
+                评价宠物
+              </el-button>
+
+              <el-popconfirm
+                v-if="row.review_status === 'pending' || row.review_status === 'supplement'"
+                title="确定撤销申请？"
+                @confirm="cancel(row)"
+              >
+                <template #reference>
+                  <el-button size="small" type="danger">撤销</el-button>
+                </template>
+              </el-popconfirm>
+
+              <el-popconfirm
+                v-else-if="row.review_status === 'approved'"
+                title="确定取消领养？取消后宠物将重新上架，下次申请将自动通过。"
+                @confirm="cancel(row)"
+              >
+                <template #reference>
+                  <el-button size="small" type="warning">取消领养</el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination v-if="total > 0" background layout="prev,pager,next,total"
-        :total="total" :page-size="10" v-model:current-page="page"
-        @current-change="load" style="margin-top:16px;justify-content:center;display:flex" />
+
+      <el-pagination
+        v-if="total > 0"
+        background
+        layout="prev,pager,next,total"
+        :total="total"
+        :page-size="10"
+        v-model:current-page="page"
+        @current-change="load"
+        style="margin-top:16px;justify-content:center;display:flex"
+      />
     </div>
   </NavBar>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import NavBar from '@/components/NavBar.vue'
 import { adoptionsApi } from '@/api'
 
+const router = useRouter()
+
 const applications = ref([])
-const total   = ref(0)
-const page    = ref(1)
+const total = ref(0)
+const page = ref(1)
 const loading = ref(false)
 
-const statusLabel = s => ({ pending:'审核中', approved:'已通过', rejected:'已拒绝', supplement:'需补材料', cancelled:'已取消' })[s] || s
-const statusType  = s => ({ pending:'warning', approved:'success', rejected:'danger', supplement:'info', cancelled:'' })[s] || ''
+const statusLabel = s => ({
+  pending: '审核中',
+  approved: '已通过',
+  rejected: '已拒绝',
+  supplement: '需补材料',
+  cancelled: '已取消'
+})[s] || s
+
+const statusType = s => ({
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+  supplement: 'info',
+  cancelled: ''
+})[s] || ''
 
 async function load() {
   loading.value = true
   try {
-    const res = await adoptionsApi.myList({ page: page.value, per_page: 10 })
+    const res = await adoptionsApi.myList({
+      page: page.value,
+      per_page: 10
+    })
+
     applications.value = res.items || []
     total.value = res.total || 0
-  } catch {} finally {
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('领养申请加载失败')
+  } finally {
     loading.value = false
   }
 }
 
+function goComplaint(row) {
+  const petId = row.pet?.pet_id || row.pet_id
+
+  if (!petId) {
+    ElMessage.error('宠物信息不存在，无法评价')
+    return
+  }
+
+  router.push({
+    path: '/complaints/create',
+    query: {
+      target_type: 'pets',
+      target_id: petId,
+      target_name: row.pet?.pet_name || '宠物',
+      return_to: '/adoptions/my'
+    }
+  })
+}
+
 async function cancel(row) {
   const res = await adoptionsApi.cancel(row.application_id)
+
   if (res?.pet_restored) {
     ElMessage.success('已取消领养，宠物已重新上架')
   } else {
     ElMessage.success('已撤销')
   }
+
   load()
 }
 
 onMounted(load)
 </script>
+
+<style scoped>
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+</style>

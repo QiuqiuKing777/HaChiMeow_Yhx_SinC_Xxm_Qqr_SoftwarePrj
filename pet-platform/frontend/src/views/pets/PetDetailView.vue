@@ -51,19 +51,28 @@
       </el-row>
 
       <!-- 评价 -->
-      <div style="margin-top:32px" v-if="pet">
-        <h3>评价 ({{ reviews.length }})</h3>
-        <el-empty v-if="reviews.length === 0" description="暂无评价" />
-        <div v-for="r in reviews" :key="r.review_id" class="review-item">
-          <el-avatar :size="36">{{ r.reviewer?.nickname?.charAt(0) }}</el-avatar>
-          <div class="review-content">
-            <div class="review-user">{{ r.reviewer?.nickname }}</div>
-            <el-rate v-model="r.rating" disabled />
-            <div class="review-text">{{ r.content }}</div>
-            <div class="review-time">{{ r.created_at?.substring(0, 10) }}</div>
-          </div>
-        </div>
-      </div>
+      <!-- 评价 -->
+<div style="margin-top:32px" v-if="pet">
+  <h3>评价 ({{ reviews.length }})</h3>
+
+  <el-empty v-if="reviews.length === 0" description="暂无评价" />
+
+  <div v-for="r in reviews" :key="r.review_id || r.id" class="review-item">
+    <el-avatar :size="36">
+      {{ r.reviewer?.nickname?.charAt(0) || '用' }}
+    </el-avatar>
+
+    <div class="review-content">
+      <div class="review-user">{{ r.reviewer?.nickname || '匿名用户' }}</div>
+
+      <el-rate :model-value="Number(r.rating || r.score || 0)" disabled />
+
+      <div class="review-text">{{ r.content }}</div>
+      <div class="review-time">{{ r.created_at?.substring(0, 10) }}</div>
+    </div>
+  </div>
+</div>
+
     </div>
   </NavBar>
 </template>
@@ -74,7 +83,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Star, StarFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import NavBar from '@/components/NavBar.vue'
-import { petsApi, reviewsApi, userApi } from '@/api'
+import { petsApi, complaintsApi, userApi } from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const route     = useRoute()
@@ -94,12 +103,26 @@ async function loadPet() {
   loading.value = true
   try {
     pet.value = await petsApi.get(route.params.id)
-    const rv  = await reviewsApi.list({ target_type: 'pet', target_id: route.params.id })
-    reviews.value = rv
+
+    const res = await complaintsApi.list({
+      target_type: 'pets',
+      target_id: route.params.id
+    })
+
+    const list = Array.isArray(res) ? res : (res.items || [])
+
+    reviews.value = list.map(item => ({
+      review_id: item.review_id || item.complaint_id,
+      reviewer: item.reviewer || item.user,
+      rating: item.rating ?? item.score,
+      content: item.content,
+      created_at: item.created_at
+    }))
   } finally {
     loading.value = false
   }
 }
+
 
 async function toggleFav() {
   if (!userStore.isLoggedIn) return router.push('/login')

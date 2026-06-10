@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy.orm import validates
 from .extensions import db
 
 
@@ -562,30 +563,107 @@ class Complaint(db.Model):
     __tablename__ = 'complaints'
 
     complaint_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    user_id      = db.Column(db.BigInteger, db.ForeignKey('users.user_id'), nullable=False)
-    target_type  = db.Column(db.String(50), nullable=False)   # order/booking/pet/product/service/user
-    target_id    = db.Column(db.BigInteger, nullable=False)
-    content      = db.Column(db.Text, nullable=False)
-    status       = db.Column(db.Enum('pending', 'handling', 'resolved', 'closed'), default='pending')
-    admin_reply  = db.Column(db.Text)
-    handled_by   = db.Column(db.BigInteger, db.ForeignKey('users.user_id'))
-    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
-    handled_at   = db.Column(db.DateTime)
 
-    user    = db.relationship('User', foreign_keys=[user_id])
+    user_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.user_id', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    target_type = db.Column(
+        db.Enum('services', 'pets', 'products'),
+        nullable=False
+    )
+
+    target_id = db.Column(db.BigInteger, nullable=False)
+
+    score = db.Column(
+        db.SmallInteger,
+        nullable=False,
+        default=5
+    )
+
+    content = db.Column(db.Text, nullable=False)
+
+    status = db.Column(
+        db.Enum('pending', 'handling', 'resolved', 'closed'),
+        nullable=False,
+        default='pending'
+    )
+
+    admin_reply = db.Column(db.Text)
+
+    handled_by = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.user_id', ondelete='SET NULL')
+    )
+
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    handled_at = db.Column(db.DateTime)
+
+    user = db.relationship('User', foreign_keys=[user_id])
     handler = db.relationship('User', foreign_keys=[handled_by])
+
+    @validates('target_type')
+    def validate_target_type(self, key, value):
+        """
+        兼容旧前端/旧接口可能传入的 singular 写法：
+        service -> services
+        pet     -> pets
+        product -> products
+        """
+        mapping = {
+            'service': 'services',
+            'pet': 'pets',
+            'product': 'products',
+            'services': 'services',
+            'pets': 'pets',
+            'products': 'products',
+        }
+
+        if value is None:
+            raise ValueError('target_type 不能为空')
+
+        normalized = mapping.get(str(value).strip())
+
+        if not normalized:
+            raise ValueError('target_type 必须是 services、pets、products 之一')
+
+        return normalized
+
+    @validates('score')
+    def validate_score(self, key, value):
+        if value is None or value == '':
+            return 5
+
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise ValueError('score 必须是 1 到 5 之间的整数')
+
+        if value < 1 or value > 5:
+            raise ValueError('score 必须是 1 到 5 之间的整数')
+
+        return value
 
     def to_dict(self):
         return {
             'complaint_id': self.complaint_id,
             'user_id':      self.user_id,
             'user':         self.user.to_public_dict() if self.user else None,
+
             'target_type':  self.target_type,
             'target_id':    self.target_id,
+
+            'score':        self.score,
+
             'content':      self.content,
             'status':       self.status,
             'admin_reply':  self.admin_reply,
             'handled_by':   self.handled_by,
+            'handler':      self.handler.to_public_dict() if self.handler else None,
+
             'created_at':   self.created_at.isoformat() if self.created_at else None,
             'handled_at':   self.handled_at.isoformat() if self.handled_at else None,
         }

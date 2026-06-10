@@ -44,7 +44,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    token = create_access_token(identity=user.user_id)
+    token = create_access_token(identity=str(user.user_id))
     return jsonify({'message': '注册成功', 'token': token, 'user': user.to_dict()}), 201
 
 
@@ -66,7 +66,7 @@ def login():
     if user.status == 'disabled':
         return jsonify({'error': '账号已被禁用，请联系管理员'}), 403
 
-    token = create_access_token(identity=user.user_id)
+    token = create_access_token(identity=str(user.user_id))
     return jsonify({'message': '登录成功', 'token': token, 'user': user.to_dict()}), 200
 
 

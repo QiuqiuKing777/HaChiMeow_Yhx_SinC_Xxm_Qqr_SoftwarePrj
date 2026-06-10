@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import ComplaintCreateView from '@/views/ComplaintCreateView.vue'
+
 
 const routes = [
   { path: '/', name: 'Home', component: () => import('@/views/HomeView.vue') },
@@ -80,7 +82,12 @@ const routes = [
       },
     ],
   },
-
+{
+  path: '/complaints/create',
+  name: 'ComplaintCreate',
+  component: ComplaintCreateView,
+  meta: { requiresAuth: true }
+},
   // 管理员后台
   {
     path: '/admin',

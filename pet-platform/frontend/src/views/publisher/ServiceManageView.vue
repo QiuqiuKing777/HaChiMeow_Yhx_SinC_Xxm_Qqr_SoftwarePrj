@@ -12,7 +12,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="名称" prop="service_name" />
+      <el-table-column label="名称" prop="service_name" width="550" show-overflow-tooltip />
       <el-table-column label="类别" prop="category" width="100" />
 
       <el-table-column label="价格" prop="price" width="90">
@@ -29,17 +29,20 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="180">
-        <template #default="{ row }">
-          <el-button class="mini-btn" size="small" @click="openSlotDialog(row)">时段</el-button>
-          <el-button class="mini-btn" size="small" @click="openDialog(row)">编辑</el-button>
-          <el-popconfirm title="确认删除？" @confirm="deleteService(row)">
-            <template #reference>
-              <el-button class="mini-btn" size="small" type="danger">删除</el-button>
-            </template>
-          </el-popconfirm>
+      <el-table-column label="操作" width="240" fixed="right">
+  <template #default="{ row }">
+    <div class="op-buttons">
+      <el-button class="mini-btn" size="small" @click="openSlotDialog(row)">时段</el-button>
+      <el-button class="mini-btn" size="small" @click="openDialog(row)">编辑</el-button>
+      <el-popconfirm title="确认删除？" @confirm="deleteService(row)">
+        <template #reference>
+          <el-button class="mini-btn" size="small" type="danger">删除</el-button>
         </template>
-      </el-table-column>
+      </el-popconfirm>
+    </div>
+  </template>
+</el-table-column>
+
     </el-table>
 
     <el-dialog v-model="dialogVisible" :title="editId ? '编辑服务' : '发布服务'" width="540px">

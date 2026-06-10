@@ -11,7 +11,7 @@ bookings_bp = Blueprint('bookings', __name__, url_prefix='/api/bookings')
 @bookings_bp.route('', methods=['POST'])
 @role_required('user')
 def create_booking():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data    = request.get_json() or {}
 
     slot_id = data.get('slot_id')
@@ -49,7 +49,7 @@ def create_booking():
 @bookings_bp.route('/my', methods=['GET'])
 @role_required('user')
 def my_bookings():
-    user_id  = get_jwt_identity()
+    user_id  = int(get_jwt_identity())
     page     = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status   = request.args.get('status', '')
@@ -66,7 +66,7 @@ def my_bookings():
 @bookings_bp.route('/publisher', methods=['GET'])
 @role_required('publisher')
 def publisher_bookings():
-    user_id  = get_jwt_identity()
+    user_id  = int(get_jwt_identity())
     page     = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status   = request.args.get('status', '')
@@ -87,7 +87,7 @@ def publisher_bookings():
 @bookings_bp.route('/<int:booking_id>', methods=['GET'])
 @jwt_required()
 def get_booking(booking_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user    = User.query.get(user_id)
     booking = Booking.query.get_or_404(booking_id)
 
@@ -103,7 +103,7 @@ def get_booking(booking_id):
 @bookings_bp.route('/<int:booking_id>/confirm', methods=['PUT'])
 @role_required('publisher')
 def confirm_booking(booking_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     booking = Booking.query.get_or_404(booking_id)
 
     if booking.service.publisher_id != user_id:
@@ -122,7 +122,7 @@ def confirm_booking(booking_id):
 @bookings_bp.route('/<int:booking_id>/cancel', methods=['PUT'])
 @jwt_required()
 def cancel_booking(booking_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user    = User.query.get(user_id)
     booking = Booking.query.get_or_404(booking_id)
 
@@ -145,7 +145,7 @@ def cancel_booking(booking_id):
 @bookings_bp.route('/<int:booking_id>/finish', methods=['PUT'])
 @role_required('publisher')
 def finish_booking(booking_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     booking = Booking.query.get_or_404(booking_id)
 
     if booking.service.publisher_id != user_id:

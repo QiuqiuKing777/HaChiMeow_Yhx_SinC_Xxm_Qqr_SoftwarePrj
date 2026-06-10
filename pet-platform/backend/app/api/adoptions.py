@@ -12,7 +12,7 @@ adoptions_bp = Blueprint('adoptions', __name__, url_prefix='/api/adoptions')
 @adoptions_bp.route('', methods=['POST'])
 @role_required('user')
 def submit_application():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json()
     if not data:
         return jsonify({'error': '请求数据不能为空'}), 400
@@ -91,7 +91,7 @@ def submit_application():
 @adoptions_bp.route('/my', methods=['GET'])
 @jwt_required()
 def my_applications():
-    user_id  = get_jwt_identity()
+    user_id  = int(get_jwt_identity())
     page     = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status   = request.args.get('status', '')
@@ -108,7 +108,7 @@ def my_applications():
 @adoptions_bp.route('/publisher', methods=['GET'])
 @role_required('publisher')
 def publisher_applications():
-    user_id  = get_jwt_identity()
+    user_id  = int(get_jwt_identity())
     page     = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status   = request.args.get('status', '')
@@ -130,7 +130,7 @@ def publisher_applications():
 @adoptions_bp.route('/<int:application_id>', methods=['GET'])
 @jwt_required()
 def get_application(application_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user    = User.query.get(user_id)
     app_obj = AdoptionApplication.query.get_or_404(application_id)
 
@@ -147,9 +147,9 @@ def get_application(application_id):
 @adoptions_bp.route('/<int:application_id>/review', methods=['PUT'])
 @role_required('publisher')
 def review_application(application_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     app_obj = AdoptionApplication.query.get_or_404(application_id)
-    pet     = pet = app_obj.pet
+    pet     = app_obj.pet
 
     if pet.publisher_id != user_id:
         return jsonify({'error': '无权操作此申请'}), 403
@@ -190,7 +190,7 @@ def review_application(application_id):
 @adoptions_bp.route('/<int:application_id>', methods=['DELETE'])
 @role_required('user')
 def cancel_application(application_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     app_obj = AdoptionApplication.query.get_or_404(application_id)
 
     if app_obj.applicant_id != user_id:

@@ -141,6 +141,10 @@ export const userApi = {
     }
     return http.delete(`/user/favorites/${typeOrId}/${id}`)
   },
+  // 新增：根据用户 ID 获取公开用户信息
+  getPublicUser(userId) {
+    return request.get(`/users/${userId}`)
+  },
   notifications: params => http.get('/user/notifications', { params }),
   markRead:      id   => http.put(`/user/notifications/${id}/read`),
   markAllRead:   ()   => http.put('/user/notifications/read-all'),
@@ -149,16 +153,31 @@ export const userApi = {
 }
 
 // ---- Reviews ----
+// export const reviewsApi = {
+//   create: data   => http.post('/reviews', data),
+//   list:   params => http.get('/reviews', { params }),
+// }
 export const reviewsApi = {
-  create: data   => http.post('/reviews', data),
-  list:   params => http.get('/reviews', { params }),
+  list: params => http.get('/reviews', { params }),
 }
 
+
 // ---- Complaints ----
+// export const complaintsApi = {
+//   submit: data   => http.post('/complaints', data),
+//   mine:   params => http.get('/complaints/mine', { params }),
+// }
+
+
+// ---- Complaints ----
+// export const complaintsApi = {
+//   create: data => http.post('/complaints', data),
+// }
 export const complaintsApi = {
-  submit: data   => http.post('/complaints', data),
-  mine:   params => http.get('/complaints/mine', { params }),
+  create: data => http.post('/complaints', data),
+  list: params => http.get('/complaints', { params }),
 }
+
 
 // ---- Admin ----
 export const adminApi = {

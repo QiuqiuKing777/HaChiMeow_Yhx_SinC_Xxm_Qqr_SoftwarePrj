@@ -1,28 +1,36 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 
 from app.extensions import db
 from app.models import CartItem, Product
 from app.utils import role_required
+from app.api.products import serialize_product
 
 cart_bp = Blueprint('cart', __name__, url_prefix='/api/cart')
+
+
+def serialize_cart_item(item):
+    data = item.to_dict()
+    if item.product:
+        data['product'] = serialize_product(item.product)
+    return data
 
 
 @cart_bp.route('', methods=['GET'])
 @role_required('user', 'publisher')
 def get_cart():
     user_id = get_jwt_identity()
-    items   = CartItem.query.filter_by(user_id=user_id).all()
-    return jsonify([item.to_dict() for item in items]), 200
+    items = CartItem.query.filter_by(user_id=user_id).all()
+    return jsonify([serialize_cart_item(item) for item in items]), 200
 
 
 @cart_bp.route('', methods=['POST'])
 @role_required('user', 'publisher')
 def add_to_cart():
-    user_id    = get_jwt_identity()
-    data       = request.get_json() or {}
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
     product_id = data.get('product_id')
-    quantity   = data.get('quantity', 1)
+    quantity = data.get('quantity', 1)
 
     if not product_id:
         return jsonify({'error': '请选择商品'}), 400
@@ -42,23 +50,23 @@ def add_to_cart():
             return jsonify({'error': '超出库存上限'}), 400
         existing.quantity = new_qty
         db.session.commit()
-        return jsonify({'message': '数量已更新', 'cart_item': existing.to_dict()}), 200
+        return jsonify({'message': '数量已更新', 'cart_item': serialize_cart_item(existing)}), 200
 
     item = CartItem(user_id=user_id, product_id=product_id, quantity=quantity)
     db.session.add(item)
     db.session.commit()
-    return jsonify({'message': '已加入购物车', 'cart_item': item.to_dict()}), 201
+    return jsonify({'message': '已加入购物车', 'cart_item': serialize_cart_item(item)}), 201
 
 
 @cart_bp.route('/<int:cart_id>', methods=['PUT'])
 @role_required('user', 'publisher')
 def update_cart(cart_id):
-    user_id  = get_jwt_identity()
+    user_id = get_jwt_identity()
     cart_item = CartItem.query.filter_by(cart_id=cart_id, user_id=user_id).first()
     if not cart_item:
         return jsonify({'error': '购物车项不存在'}), 404
 
-    data     = request.get_json() or {}
+    data = request.get_json() or {}
     quantity = data.get('quantity')
     if quantity is None or quantity < 1:
         return jsonify({'error': '数量不合法'}), 400
@@ -67,13 +75,13 @@ def update_cart(cart_id):
 
     cart_item.quantity = quantity
     db.session.commit()
-    return jsonify({'message': '已更新', 'cart_item': cart_item.to_dict()}), 200
+    return jsonify({'message': '已更新', 'cart_item': serialize_cart_item(cart_item)}), 200
 
 
 @cart_bp.route('/<int:cart_id>', methods=['DELETE'])
 @role_required('user', 'publisher')
 def remove_cart(cart_id):
-    user_id   = get_jwt_identity()
+    user_id = get_jwt_identity()
     cart_item = CartItem.query.filter_by(cart_id=cart_id, user_id=user_id).first()
     if not cart_item:
         return jsonify({'error': '购物车项不存在'}), 404
