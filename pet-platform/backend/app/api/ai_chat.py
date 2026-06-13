@@ -1,11 +1,15 @@
 """
 AI 宠物对话模块
-- 默认使用内置规则库回答常见养宠/领养问题
-- 若配置了 OPENAI_API_KEY，则将请求转发给 OpenAI ChatCompletion API
+- 优先使用 DeepSeek API（Anthropic 兼容接口）回答用户问题
+- 若 API 不可用或未配置，则回退到内置规则库
 """
 import os
-import re
+import json
+import logging
+import urllib.request
 from flask import Blueprint, request, jsonify
+
+logger = logging.getLogger(__name__)
 
 ai_chat_bp = Blueprint('ai_chat', __name__, url_prefix='/api/ai')
 
@@ -141,14 +145,16 @@ def _rule_based_reply(message: str) -> str:
     return None
 
 
-def _openai_reply(message: str, history: list) -> str:
-    """调用 OpenAI ChatCompletion，需要环境变量 OPENAI_API_KEY。"""
-    import json
-    import urllib.request
+def _ai_reply(message: str, history: list) -> str | None:
+    """调用 DeepSeek API（Anthropic Messages 兼容接口）。"""
+    api_key = os.environ.get('ANTHROPIC_AUTH_TOKEN', '')
+    api_base = os.environ.get('ANTHROPIC_BASE_URL', 'https://api.deepseek.com/anthropic')
+    model = os.environ.get('ANTHROPIC_MODEL', 'deepseek-v4-pro[1m]')
 
-    api_key = os.environ.get('OPENAI_API_KEY', '')
-    api_base = os.environ.get('OPENAI_API_BASE', 'https://api.openai.com')
-    model = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
+    if not api_key:
+        logger.warning('ANTHROPIC_AUTH_TOKEN not set, skipping AI call')
+        print('[AI Chat] ANTHROPIC_AUTH_TOKEN not set, using rule-based fallback')
+        return None
 
     system_prompt = (
         '你是"宠爱有家"宠物领养与社区服务平台的 AI 宠物助手。'
@@ -157,31 +163,63 @@ def _openai_reply(message: str, history: list) -> str:
         '不要回答与宠物和平台无关的问题。'
     )
 
-    messages = [{'role': 'system', 'content': system_prompt}]
+    messages = []
     for h in (history or []):
-        if h.get('role') in ('user', 'assistant'):
-            messages.append({'role': h['role'], 'content': h['content']})
-    messages.append({'role': 'user', 'content': message})
+        role = h.get('role')
+        content = h.get('content', '')
+        # 跳过空内容，避免污染上下文
+        if role in ('user', 'assistant') and content.strip():
+            messages.append({'role': role, 'content': content})
+
+    # 仅当最后一条不是当前用户消息时才追加，避免重复
+    if not messages or messages[-1].get('content', '') != message:
+        messages.append({'role': 'user', 'content': message})
 
     payload = json.dumps({
         'model': model,
+        'system': system_prompt,
         'messages': messages,
         'max_tokens': 800,
         'temperature': 0.7,
     }).encode('utf-8')
 
+    url = f'{api_base.rstrip("/")}/v1/messages'
+    print(f'[AI Chat] Calling API: url={url}, model={model}, msg_count={len(messages)}')
     req = urllib.request.Request(
-        f'{api_base.rstrip("/")}/v1/chat/completions',
+        url,
         data=payload,
         headers={
             'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_key}',
+            'x-api-key': api_key,
+            'anthropic-version': '2023-06-01',
         },
         method='POST',
     )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        data = json.loads(resp.read().decode('utf-8'))
-    return data['choices'][0]['message']['content'].strip()
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp_body = resp.read().decode('utf-8')
+            print(f'[AI Chat] API response status: {resp.status}')
+            data = json.loads(resp_body)
+        text_parts = []
+        for block in data.get('content', []):
+            if block.get('type') == 'text':
+                text_parts.append(block.get('text', ''))
+        reply_text = '\n'.join(text_parts).strip()
+        if not reply_text:
+            logger.warning('AI response contained no text blocks, may be thinking-only')
+            print('[AI Chat] API returned no text content (thinking-only or empty)')
+            return None
+        print(f'[AI Chat] API reply length: {len(reply_text)} chars')
+        return reply_text
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8', errors='replace')
+        logger.error(f'AI API HTTP {e.code}: {error_body}')
+        print(f'[AI Chat] API HTTP {e.code} error: {error_body[:500]}')
+        return None
+    except Exception as e:
+        logger.error(f'AI API call failed: {type(e).__name__}: {e}')
+        print(f'[AI Chat] API call failed: {type(e).__name__}: {e}')
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -191,32 +229,46 @@ def _openai_reply(message: str, history: list) -> str:
 @ai_chat_bp.route('/chat', methods=['POST'])
 def chat():
     """
-    请求体：
-    {
-      "message": "用户输入的消息",
-      "history": [{"role": "user"|"assistant", "content": "..."}]  // 可选，多轮上下文
-    }
-    响应体：
-    {
-      "reply": "AI 回复文本",
-      "source": "rule" | "openai"
-    }
+    请求体：{"message": "...", "history": [...]}
+    响应体：{"reply": "...", "source": "ai"|"rule"}
+    注意：此接口始终返回 200，错误信息内嵌在 reply 字段中，确保前端不会进入 catch 分支。
     """
-    data = request.get_json(silent=True) or {}
-    message = str(data.get('message', '')).strip()
-    history = data.get('history', [])
+    try:
+        data = request.get_json(silent=True)
 
-    if not message:
-        return jsonify({'error': '消息不能为空'}), 400
-    if len(message) > 500:
-        return jsonify({'error': '消息长度不能超过 500 字符'}), 400
+        if data is None:
+            raw = request.get_data(as_text=True) or ''
+            print(f'[AI Chat] JSON parse failed, content_type={request.content_type}, raw_len={len(raw)}, raw_preview={raw[:300]}')
+            logger.error('Failed to parse request body as JSON. content_type=%s raw=%s', request.content_type, raw[:500])
+            return jsonify({'reply': '抱歉，请求格式有误，请刷新页面后重试。', 'source': 'rule'}), 200
 
-    # 仅使用本地规则，不调用外部 API
-    reply = _rule_based_reply(message)
-    source = 'rule'
+        message = str(data.get('message', '')).strip()
+        history = data.get('history', []) if isinstance(data.get('history'), list) else []
 
-    if reply is None:
-        reply = _FALLBACK
+        print(f'[AI Chat] message="{message[:100]}", history_len={len(history)}')
+
+        if not message:
+            return jsonify({'reply': '请输入您想咨询的问题，我会尽力为您解答。', 'source': 'rule'}), 200
+        if len(message) > 500:
+            return jsonify({'reply': '您的问题太长了，请精简到 500 字以内再提问。', 'source': 'rule'}), 200
+
         source = 'rule'
+        reply = None
 
-    return jsonify({'reply': reply, 'source': source}), 200
+        try:
+            reply = _ai_reply(message, history)
+            if reply:
+                source = 'ai'
+        except Exception as e:
+            logger.warning(f'AI call exception, falling back to rule: {e}')
+            print(f'[AI Chat] AI call exception: {e}')
+
+        if reply is None:
+            reply = _rule_based_reply(message) or _FALLBACK
+
+        return jsonify({'reply': reply, 'source': source}), 200
+
+    except Exception as e:
+        logger.exception('Unexpected error in chat endpoint')
+        print(f'[AI Chat] Unexpected error: {type(e).__name__}: {e}')
+        return jsonify({'reply': _FALLBACK, 'source': 'rule'}), 200
