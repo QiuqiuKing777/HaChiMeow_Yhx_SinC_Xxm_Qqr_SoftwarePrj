@@ -30,9 +30,18 @@
 
         <el-table-column label="审核意见" prop="review_remark" width="160" show-overflow-tooltip />
 
-        <el-table-column label="操作" width="190">
+        <el-table-column label="操作" width="280">
           <template #default="{ row }">
             <div class="actions">
+              <el-button
+                v-if="row.review_status === 'approved'"
+                size="small"
+                type="success"
+                @click="goFeedback(row)"
+              >
+                反馈状态
+              </el-button>
+
               <el-button
                 size="small"
                 type="primary"
@@ -145,6 +154,10 @@ function goComplaint(row) {
       return_to: '/adoptions/my'
     }
   })
+}
+
+function goFeedback(row) {
+  router.push(`/user/applications/${row.application_id}/feedback`)
 }
 
 async function cancel(row) {

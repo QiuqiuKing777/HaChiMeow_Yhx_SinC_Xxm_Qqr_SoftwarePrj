@@ -37,6 +37,7 @@ const routes = [
   { path: '/user/favorites', name: 'Favorites', component: () => import('@/views/user/FavoritesView.vue'), meta: { requiresAuth: true, roles: ['user'] } },
   { path: '/user/notifications', name: 'Notifications', component: () => import('@/views/user/NotificationsView.vue'), meta: { requiresAuth: true, roles: ['user', 'publisher', 'admin'] } },
   { path: '/user/applications', name: 'MyApplications', component: () => import('@/views/user/MyApplicationsView.vue'), meta: { requiresAuth: true, roles: ['user'] } },
+  { path: '/user/applications/:id/feedback', name: 'PetFeedback', component: () => import('@/views/user/PetFeedbackView.vue'), meta: { requiresAuth: true, roles: ['user'] } },
   { path: '/messages', name: 'Messages', component: () => import('@/views/user/MessagesView.vue'), meta: { requiresAuth: true, roles: ['user', 'publisher', 'admin'] } },
 
   // 发布方工作台
@@ -79,6 +80,11 @@ const routes = [
         path: 'bookings',
         name: 'PubBookings',
         component: () => import('@/views/publisher/BookingManageView.vue'),
+      },
+      {
+        path: 'pets/:id/feedback',
+        name: 'PubPetFeedback',
+        component: () => import('@/views/publisher/PetFeedbackListView.vue'),
       },
     ],
   },

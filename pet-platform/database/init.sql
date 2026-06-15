@@ -296,7 +296,24 @@ CREATE TABLE IF NOT EXISTS operation_logs (
 ) COMMENT='操作日志表';
 
 -- ----------------------------------------------------------------
--- 19. 投诉表
+-- 19. 领养反馈表
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pet_feedbacks (
+    feedback_id    BIGINT        PRIMARY KEY AUTO_INCREMENT,
+    pet_id         BIGINT        NOT NULL              COMMENT '宠物ID',
+    application_id BIGINT        NOT NULL              COMMENT '领养申请ID',
+    user_id        BIGINT        NOT NULL              COMMENT '反馈人（领养者）用户ID',
+    photo_url      VARCHAR(255)                        COMMENT '宠物当日照片URL',
+    weight         DECIMAL(5,2)                        COMMENT '体重(kg)',
+    notes          TEXT                                COMMENT '备注说明',
+    created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pet_id)         REFERENCES pets(pet_id),
+    FOREIGN KEY (application_id) REFERENCES adoption_applications(application_id),
+    FOREIGN KEY (user_id)        REFERENCES users(user_id)
+) COMMENT='宠物领养反馈表';
+
+-- ----------------------------------------------------------------
+-- 20. 投诉表
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS complaints (
     complaint_id BIGINT      PRIMARY KEY AUTO_INCREMENT,
@@ -328,7 +345,9 @@ CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 CREATE INDEX idx_messages_receiver  ON messages(receiver_id, is_read);
 CREATE INDEX idx_applications_pet   ON adoption_applications(pet_id);
 CREATE INDEX idx_applications_applicant ON adoption_applications(applicant_id);
-
+CREATE INDEX idx_feedbacks_pet         ON pet_feedbacks(pet_id);
+CREATE INDEX idx_feedbacks_application ON pet_feedbacks(application_id);
+CREATE INDEX idx_feedbacks_user        ON pet_feedbacks(user_id);
 -- ================================================================
 -- 初始数据（所有密码均为对应角色名+123，运行时需重新生成哈希）
 -- 实际密码请通过 werkzeug.security.generate_password_hash() 生成

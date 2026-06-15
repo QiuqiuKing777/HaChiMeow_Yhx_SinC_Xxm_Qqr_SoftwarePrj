@@ -23,8 +23,14 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160">
+      <el-table-column label="操作" width="240">
         <template #default="{ row }">
+          <el-button
+            v-if="row.status === 'adopted'"
+            size="small"
+            type="success"
+            @click="$router.push(`/publisher/pets/${row.pet_id}/feedback`)"
+          >查看反馈</el-button>
           <el-button class="mini-btn" size="small" @click="openDialog(row)">编辑</el-button>
           <el-popconfirm title="确认删除？" @confirm="deletePet(row)">
             <template #reference>

@@ -557,6 +557,40 @@ class OperationLog(db.Model):
 
 
 # ----------------------------------------------------------------
+# 宠物领养反馈表
+# ----------------------------------------------------------------
+class PetFeedback(db.Model):
+    __tablename__ = 'pet_feedbacks'
+
+    feedback_id    = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    pet_id         = db.Column(db.BigInteger, db.ForeignKey('pets.pet_id'), nullable=False)
+    application_id = db.Column(db.BigInteger, db.ForeignKey('adoption_applications.application_id'), nullable=False)
+    user_id        = db.Column(db.BigInteger, db.ForeignKey('users.user_id'), nullable=False)
+    photo_url      = db.Column(db.String(255))
+    weight         = db.Column(db.Numeric(5, 2))
+    notes          = db.Column(db.Text)
+    created_at     = db.Column(db.DateTime, default=datetime.utcnow)
+
+    pet         = db.relationship('Pet')
+    application = db.relationship('AdoptionApplication')
+    user        = db.relationship('User')
+
+    def to_dict(self):
+        return {
+            'feedback_id':    self.feedback_id,
+            'pet_id':         self.pet_id,
+            'pet_name':       self.pet.pet_name if self.pet else None,
+            'application_id': self.application_id,
+            'user_id':        self.user_id,
+            'user':           self.user.to_public_dict() if self.user else None,
+            'photo_url':      self.photo_url,
+            'weight':         float(self.weight) if self.weight else None,
+            'notes':          self.notes,
+            'created_at':     self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# ----------------------------------------------------------------
 # 投诉表
 # ----------------------------------------------------------------
 class Complaint(db.Model):

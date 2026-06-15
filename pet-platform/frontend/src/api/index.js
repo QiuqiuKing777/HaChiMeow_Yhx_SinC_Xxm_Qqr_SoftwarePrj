@@ -184,4 +184,12 @@ export const aiApi = {
   chat: data => http.post('/ai/chat', data, { timeout: 60000 }),
 }
 
+// ---- Feedbacks ----
+export const feedbacksApi = {
+  submit:       data   => http.post('/feedbacks', data),
+  myList:       params => http.get('/feedbacks/my', { params }),
+  petFeedbacks: (petId, params) => http.get(`/feedbacks/pet/${petId}`, { params }),
+  status:       applicationId => http.get(`/feedbacks/status/${applicationId}`),
+}
+
 export default http
