@@ -8,7 +8,7 @@ import json
 import logging
 import urllib.request
 from flask import Blueprint, request, jsonify
-#如果您的python版本低于3.10，注释上一行，解注释下一行
+#如果您的python版本低于3.10，解注释下一行
 #from typing import Optional
 
 logger = logging.getLogger(__name__)
