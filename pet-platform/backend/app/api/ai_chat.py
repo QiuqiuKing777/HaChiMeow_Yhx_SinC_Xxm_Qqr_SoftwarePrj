@@ -146,7 +146,7 @@ def _rule_based_reply(message: str) -> str:
                 return reply
     return None
 
-#如果这一行报错了，调整函数定义为：
+#如果这一行报错了，调整函数定义如下，并按照import部分的注释调整头文件内容：
 #def _ai_reply(message: str, history: list) -> Optional[str]:
 def _ai_reply(message: str, history: list) -> str | None:
     """调用 DeepSeek API（Anthropic Messages 兼容接口）。"""
