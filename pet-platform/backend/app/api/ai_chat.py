@@ -8,6 +8,8 @@ import json
 import logging
 import urllib.request
 from flask import Blueprint, request, jsonify
+#如果您的python版本低于3.10，注释上一行，解注释下一行
+#from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +146,8 @@ def _rule_based_reply(message: str) -> str:
                 return reply
     return None
 
-
+#如果这一行报错了，调整函数定义为：
+#def _ai_reply(message: str, history: list) -> Optional[str]:
 def _ai_reply(message: str, history: list) -> str | None:
     """调用 DeepSeek API（Anthropic Messages 兼容接口）。"""
     api_key = os.environ.get('ANTHROPIC_AUTH_TOKEN', '')
