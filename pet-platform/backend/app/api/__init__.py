@@ -13,7 +13,7 @@ from .admin import admin_bp
 from .reviews import reviews_bp
 from .complaints import complaints_bp
 from .ai_chat import ai_chat_bp
-
+from .feedbacks import feedbacks_bp
 
 def register_blueprints(app):
     app.register_blueprint(auth_bp)
@@ -29,3 +29,4 @@ def register_blueprints(app):
     app.register_blueprint(reviews_bp)
     app.register_blueprint(complaints_bp)
     app.register_blueprint(ai_chat_bp)
+    app.register_blueprint(feedbacks_bp)
