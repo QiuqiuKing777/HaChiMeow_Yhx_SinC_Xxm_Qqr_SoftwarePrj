@@ -1,33 +1,19 @@
-from flask import Blueprint
-
-from .auth import auth_bp
-from .pets import pets_bp
-from .adoptions import adoptions_bp
-from .products import products_bp
-from .cart import cart_bp
-from .orders import orders_bp
-from .services import services_bp
-from .bookings import bookings_bp
-from .user import user_bp
-from .admin import admin_bp
-from .reviews import reviews_bp
-from .complaints import complaints_bp
-from .feedbacks import feedbacks_bp
-from .ai_chat import ai_chat_bp
+from flask import Flask
+from .config import config
+from .extensions import db, jwt, cors
 
 
-def register_blueprints(app):
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(pets_bp)
-    app.register_blueprint(adoptions_bp)
-    app.register_blueprint(products_bp)
-    app.register_blueprint(cart_bp)
-    app.register_blueprint(orders_bp)
-    app.register_blueprint(services_bp)
-    app.register_blueprint(bookings_bp)
-    app.register_blueprint(user_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(reviews_bp)
-    app.register_blueprint(complaints_bp)
-    app.register_blueprint(feedbacks_bp)
-    app.register_blueprint(ai_chat_bp)
+def create_app(config_name='default'):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+
+    # 初始化扩展
+    db.init_app(app)
+    jwt.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+
+    # 注册蓝图
+    from .api import register_blueprints
+    register_blueprints(app)
+
+    return app
