@@ -165,6 +165,7 @@ async function onSubmit() {
     }
   } catch (e) {
     console.error(e)
+    ElMessage.error('密码或用户名错误，请重新输入')
   } finally {
     loading.value = false
   }
